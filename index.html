@@ -621,7 +621,7 @@ const STEPS = [
 
 function totalItens() { return STEPS.flatMap(s => s.itens).length; }
 
-// AUTH
+// AUTH via REST API (evita bloqueio do reCAPTCHA Enterprise do Firebase SDK)
 window.fazerLogin = async function() {
   const email = document.getElementById('login-email').value.trim();
   const senha = document.getElementById('login-senha').value;
@@ -630,34 +630,66 @@ window.fazerLogin = async function() {
   errEl.style.display = 'none';
   btn.disabled = true; btn.textContent = 'Entrando...';
   try {
-    await signInWithEmailAndPassword(auth, email, senha);
+    const res = await fetch(
+      'https://identitytoolkit.googleapis.com/v1/accounts:signInWithPassword?key=' + firebaseConfig.apiKey,
+      { method:'POST', headers:{'Content-Type':'application/json'},
+        body: JSON.stringify({email:email, password:senha, returnSecureToken:true}) }
+    );
+    const data = await res.json();
+    if (!res.ok) {
+      const msg = data.error ? data.error.message : '';
+      if(msg.includes('INVALID_LOGIN_CREDENTIALS')||msg.includes('INVALID_PASSWORD')||msg.includes('EMAIL_NOT_FOUND')) {
+        errEl.textContent = 'E-mail ou senha incorretos.';
+      } else if(msg.includes('TOO_MANY_ATTEMPTS')) {
+        errEl.textContent = 'Muitas tentativas. Aguarde alguns minutos.';
+      } else {
+        errEl.textContent = 'Erro: ' + msg;
+      }
+      errEl.style.display = 'block';
+      btn.disabled = false; btn.textContent = 'Entrar';
+      return;
+    }
+    sessionStorage.setItem('fb_token', data.idToken);
+    sessionStorage.setItem('fb_email', data.email);
+    currentUser = { email: data.email, uid: data.localId, token: data.idToken };
+    document.getElementById('auth-screen').style.display = 'none';
+    document.getElementById('app-screen').style.display = 'block';
+    document.getElementById('sidebar-user-email').textContent = data.email;
+    iniciarListeners();
+    navTo('painel');
   } catch(e) {
-    errEl.textContent = e.code === 'auth/invalid-credential' ? 'E-mail ou senha incorretos.' : 'Erro ao fazer login. Tente novamente.';
+    errEl.textContent = 'Erro de conexao. Tente novamente.';
     errEl.style.display = 'block';
     btn.disabled = false; btn.textContent = 'Entrar';
   }
 };
 
 window.fazerLogout = async function() {
-  await signOut(auth);
+  sessionStorage.removeItem('fb_token');
+  sessionStorage.removeItem('fb_email');
+  currentUser = null;
+  document.getElementById('auth-screen').style.display = 'flex';
+  document.getElementById('app-screen').style.display = 'none';
+  document.getElementById('btn-login').disabled = false;
+  document.getElementById('btn-login').textContent = 'Entrar';
 };
 
-onAuthStateChanged(auth, user => {
-  if (user) {
-    currentUser = user;
+// Verificar sessão existente ao carregar
+(function verificarSessao() {
+  const token = sessionStorage.getItem('fb_token');
+  const email = sessionStorage.getItem('fb_email');
+  if (token && email) {
+    currentUser = { email, token };
     document.getElementById('auth-screen').style.display = 'none';
     document.getElementById('app-screen').style.display = 'block';
-    document.getElementById('sidebar-user-email').textContent = user.email;
+    document.getElementById('sidebar-user-email').textContent = email;
     iniciarListeners();
     navTo('painel');
   } else {
-    currentUser = null;
     document.getElementById('auth-screen').style.display = 'flex';
     document.getElementById('app-screen').style.display = 'none';
-    document.getElementById('btn-login').disabled = false;
-    document.getElementById('btn-login').textContent = 'Entrar';
   }
-});
+})();
 
 // FIRESTORE LISTENERS
 function iniciarListeners() {
