@@ -713,7 +713,7 @@ window.go = function(page){
   const map={painel:0,candidatos:1,'novo-cand':2,admissoes:3,config:4,usuarios:5};
   const navItems=document.querySelectorAll('.nav-item');
   if(map[page]!==undefined) navItems[map[page]]?.classList.add('active');
-  const el=document.getElementById('page-'+page.replace(/-/g,''));
+  const el=document.getElementById('page-'+page);
   if(el) el.classList.add('active');
   if(page==='painel') renderPainel();
   if(page==='candidatos') renderCands();
@@ -877,9 +877,8 @@ window.salvarCand=async function(){
 };
 
 window.limparCad=function(){
-  document.querySelectorAll('#page-novoand input,#page-novoand textarea,#page-novoand select').forEach(e=>e.value='');
-  document.querySelectorAll('#page-novocand input,#page-novocand textarea').forEach(e=>e.value='');
-  document.querySelectorAll('#page-novocand select').forEach(e=>e.selectedIndex=0);
+  document.querySelectorAll('#page-novo-cand input,#page-novo-cand textarea').forEach(e=>e.value='');
+  document.querySelectorAll('#page-novo-cand select').forEach(e=>e.selectedIndex=0);
   clearTags(); expEntries=[]; formEntries=[]; renderExpEntries(); renderFormEntries();
   document.getElementById('cpf-st').textContent=''; document.getElementById('dup-aviso').style.display='none';
   document.getElementById('cep-h').textContent=''; document.getElementById('comp-tags-area').innerHTML='';
