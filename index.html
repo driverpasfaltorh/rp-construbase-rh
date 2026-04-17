@@ -776,12 +776,42 @@ function getSelectedTags(){
 function clearTags(){document.querySelectorAll('#comp-tags-area .tag').forEach(t=>t.classList.remove('sel'));}
 
 // EXPERIÊNCIAS
+function salvarValoresExp(){
+  expEntries.forEach(e=>{
+    const emp=document.getElementById('ex-emp-'+e.id);
+    const cargo=document.getElementById('ex-cargo-'+e.id);
+    const vinculo=document.getElementById('ex-vinculo-'+e.id);
+    const de=document.getElementById('ex-de-'+e.id);
+    const ate=document.getElementById('ex-ate-'+e.id);
+    const motivo=document.getElementById('ex-motivo-'+e.id);
+    const desc=document.getElementById('ex-desc-'+e.id);
+    if(emp) e.empresa=emp.value;
+    if(cargo) e.cargo=cargo.value;
+    if(vinculo) e.vinculo=vinculo.value;
+    if(de) e.de=de.value;
+    if(ate) e.ate=ate.value;
+    if(motivo) e.motivo=motivo.value;
+    if(desc) e.desc=desc.value;
+  });
+}
+function salvarValoresForm(){
+  formEntries.forEach(f=>{
+    const nome=document.getElementById('fm-nome-'+f.id);
+    const inst=document.getElementById('fm-inst-'+f.id);
+    const ano=document.getElementById('fm-ano-'+f.id);
+    if(nome) f.nome=nome.value;
+    if(inst) f.inst=inst.value;
+    if(ano) f.ano=ano.value;
+  });
+}
 window.addExp=function(){
+  salvarValoresExp();
   const id='exp-'+Date.now();
   expEntries.push({id});
   renderExpEntries();
 };
 window.addForm=function(){
+  salvarValoresForm();
   const id='form-'+Date.now();
   formEntries.push({id});
   renderFormEntries();
@@ -816,10 +846,11 @@ function renderFormEntries(){
       </div>
     </div>`).join('');
 }
-window.removeExp=function(i){expEntries.splice(i,1);renderExpEntries();};
-window.removeForm=function(i){formEntries.splice(i,1);renderFormEntries();};
+window.removeExp=function(i){salvarValoresExp();expEntries.splice(i,1);renderExpEntries();};
+window.removeForm=function(i){salvarValoresForm();formEntries.splice(i,1);renderFormEntries();};
 
 function coletarExps(){
+  salvarValoresExp();
   return expEntries.map(e=>({
     empresa:document.getElementById('ex-emp-'+e.id)?.value||'',
     cargo:document.getElementById('ex-cargo-'+e.id)?.value||'',
@@ -831,6 +862,7 @@ function coletarExps(){
   })).filter(e=>e.empresa||e.cargo);
 }
 function coletarForms(){
+  salvarValoresForm();
   return formEntries.map(f=>({
     nome:document.getElementById('fm-nome-'+f.id)?.value||'',
     inst:document.getElementById('fm-inst-'+f.id)?.value||'',
@@ -1181,9 +1213,6 @@ Obra/Local: ${a.obra||'A definir'}
 Data de admissão: ${a.dataAdm?new Date(a.dataAdm+'T00:00').toLocaleDateString('pt-BR'):'A definir'}
 Horário: ${a.horario||'A definir'}
 ${a.alojado?`Alojado: Sim — ${a.alojId||''} Quarto ${a.quarto||''} Cama ${a.cama||''}`:'Alojado: Não'}
-
-DOCUMENTAÇÃO RECEBIDA ATÉ O MOMENTO
-${STEPS.find(s=>s.id==='docs')?.itens.map(i=>`${a.checks?.[i.id]?'[X]':'[ ]'} ${i.label}`).join('\n')||''}
 
 SOLICITAÇÃO
 Por favor, providenciar:
