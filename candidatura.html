@@ -1,0 +1,354 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Candidatura — RP Construbase</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+:root{--bg:#f8f7f4;--sur:#fff;--brd:#e5e3dc;--brd2:#d0cdc4;--txt:#1a1a18;--txt2:#5a5854;--txt3:#9a9690;--blue:#185FA5;--bbg:#E6F1FB;--btxt:#0C447C;--green:#3B6D11;--gbg:#EAF3DE;--gtxt:#27500A;--amber:#854F0B;--abg:#FAEEDA;--atxt:#633806;--red:#A32D2D;--rbg:#FCEBEB;--rtxt:#791F1F;--r:8px;--rl:12px}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:var(--bg);color:var(--txt);font-size:15px;line-height:1.6;min-height:100vh}
+.wrap{max-width:620px;margin:0 auto;padding:1.5rem 1rem 5rem}
+.hdr{text-align:center;margin-bottom:2rem}
+.hdr-logo{font-size:20px;font-weight:600}
+.hdr-sub{font-size:13px;color:var(--txt3);margin-top:3px}
+.vaga-pill{display:inline-block;background:var(--bbg);color:var(--btxt);font-size:13px;font-weight:500;padding:5px 14px;border-radius:20px;margin-top:.75rem}
+.prog{margin-bottom:2rem}
+.prog-steps{display:flex;align-items:flex-start;margin-bottom:.75rem}
+.ps{display:flex;flex-direction:column;align-items:center;gap:4px;flex:1}
+.pc{width:32px;height:32px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:500;border:2px solid var(--brd2);background:var(--sur);color:var(--txt3);z-index:1}
+.pc.act{background:var(--blue);border-color:var(--blue);color:#fff}
+.pc.don{background:var(--green);border-color:var(--green);color:#fff}
+.pl{font-size:11px;color:var(--txt3);text-align:center}
+.pl.act{color:var(--blue);font-weight:500}
+.pl.don{color:var(--green)}
+.pline{height:2px;background:var(--brd2);flex:1;margin-top:15px}
+.pline.don{background:var(--green)}
+.pbar-wrap{height:4px;background:var(--brd);border-radius:2px;overflow:hidden}
+.pbar{height:4px;background:var(--blue);border-radius:2px;transition:width .4s}
+.card{background:var(--sur);border:0.5px solid var(--brd);border-radius:var(--rl);padding:1.25rem;margin-bottom:1rem}
+.card-ttl{font-size:15px;font-weight:500;margin-bottom:1rem;display:flex;align-items:center;gap:8px;color:var(--txt)}
+.card-dot{width:8px;height:8px;border-radius:50%;background:var(--blue);flex-shrink:0}
+.fg{display:flex;flex-direction:column;gap:4px;margin-bottom:1rem}
+.fg label{font-size:13px;color:var(--txt2);font-weight:500}
+.fg .opt{font-weight:400;color:var(--txt3);font-size:12px}
+.fg input,.fg select,.fg textarea{font-size:15px;padding:10px 12px;border:1px solid var(--brd2);border-radius:var(--r);background:var(--sur);color:var(--txt);width:100%;-webkit-appearance:none}
+.fg input:focus,.fg select:focus,.fg textarea:focus{outline:none;border-color:var(--blue);box-shadow:0 0 0 3px rgba(24,95,165,.1)}
+.fg .hint{font-size:12px;color:var(--txt3)}
+.fg .ferr{font-size:12px;color:var(--rtxt);display:none}
+.fg.herr input,.fg.herr select,.fg.herr textarea{border-color:var(--red)}
+.fg.herr .ferr{display:block}
+.g2{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.exp-card{background:var(--bg);border:0.5px solid var(--brd);border-radius:var(--r);padding:12px;margin-bottom:10px;position:relative}
+.exp-del{position:absolute;top:6px;right:8px;background:none;border:none;cursor:pointer;color:var(--txt3);font-size:22px;line-height:1;padding:0}
+.exp-del:hover{color:var(--rtxt)}
+.upload-box{border:1.5px dashed var(--brd2);border-radius:var(--r);padding:14px;cursor:pointer;position:relative;background:var(--sur);transition:all .2s;margin-bottom:.5rem}
+.upload-box:hover{border-color:var(--blue);background:var(--bbg)}
+.upload-box.ok{border-color:var(--green);border-style:solid;background:var(--gbg)}
+.upload-box input{position:absolute;inset:0;opacity:0;cursor:pointer;width:100%;height:100%}
+.upload-box-name{font-size:13px;font-weight:500;color:var(--txt)}
+.upload-box-st{font-size:12px;color:var(--txt3);margin-top:2px}
+.upload-box.ok .upload-box-st{color:var(--gtxt)}
+.btn{padding:12px 20px;border-radius:var(--r);font-size:15px;cursor:pointer;border:1px solid var(--brd2);background:var(--sur);color:var(--txt);font-weight:400;width:100%}
+.btn-p{background:var(--blue);color:#fff;border-color:var(--blue);font-weight:500}
+.btn-p:hover{opacity:.9}
+.btn-p:disabled{opacity:.5;cursor:not-allowed}
+.btn-o{color:var(--txt2)}
+.btn-row{display:flex;gap:10px;margin-top:1.5rem}
+.btn-row .btn{flex:1}
+.suc{display:none;text-align:center;padding:2.5rem 1rem}
+.suc-icon{font-size:56px;margin-bottom:1rem}
+.suc-title{font-size:22px;font-weight:500;margin-bottom:.5rem}
+.suc-sub{font-size:14px;color:var(--txt2);margin-bottom:1.5rem;line-height:1.6}
+.suc-card{background:var(--gbg);border:0.5px solid var(--green);border-radius:var(--rl);padding:1rem;text-align:left;margin-bottom:1rem}
+.suc-card-ttl{font-size:12px;font-weight:500;color:var(--gtxt);text-transform:uppercase;letter-spacing:.05em;margin-bottom:.5rem}
+.suc-card-row{font-size:13px;color:var(--gtxt);padding:2px 0}
+.ov{display:none;position:fixed;inset:0;background:rgba(255,255,255,.9);z-index:100;align-items:center;justify-content:center;flex-direction:column;gap:12px}
+.ov.show{display:flex}
+.spin{width:40px;height:40px;border:3px solid var(--brd2);border-top-color:var(--blue);border-radius:50%;animation:sp .8s linear infinite}
+@keyframes sp{to{transform:rotate(360deg)}}
+.spin-txt{font-size:14px;color:var(--txt2)}
+@media(max-width:480px){.g2{grid-template-columns:1fr}.btn-row{flex-direction:column-reverse}}
+</style>
+</head>
+<body>
+<div class="ov" id="ov"><div class="spin"></div><div class="spin-txt" id="ov-txt">Enviando...</div></div>
+<div class="wrap">
+  <div class="hdr">
+    <div class="hdr-logo">RP Construbase</div>
+    <div class="hdr-sub">Recrutamento & Seleção</div>
+    <div id="vaga-wrap"></div>
+  </div>
+
+  <div class="prog" id="prog">
+    <div class="prog-steps">
+      <div class="ps"><div class="pc act" id="pc1">1</div><div class="pl act" id="pl1">Dados pessoais</div></div>
+      <div class="pline" id="pl12"></div>
+      <div class="ps"><div class="pc" id="pc2">2</div><div class="pl" id="pl2">Vaga e experiência</div></div>
+    </div>
+    <div class="pbar-wrap"><div class="pbar" id="pbar" style="width:50%"></div></div>
+  </div>
+
+  <!-- ETAPA 1 -->
+  <div id="e1">
+    <div class="card">
+      <div class="card-ttl"><div class="card-dot"></div>Informações pessoais</div>
+      <div class="fg" id="fg-nome"><label>Nome completo *</label><input type="text" id="f-nome" autocomplete="name" placeholder="Seu nome completo"><span class="ferr">Informe seu nome completo.</span></div>
+      <div class="g2">
+        <div class="fg" id="fg-cpf"><label>CPF *</label><input type="text" id="f-cpf" placeholder="000.000.000-00" oninput="mCPF(this)" maxlength="14" inputmode="numeric"><span class="ferr" id="cpf-ferr">CPF inválido.</span></div>
+        <div class="fg" id="fg-nasc"><label>Data de nascimento *</label><input type="date" id="f-nasc"><span class="ferr">Informe sua data de nascimento.</span></div>
+      </div>
+      <div class="g2">
+        <div class="fg"><label>Sexo *</label><select id="f-sexo"><option value="">—</option><option value="M">Masculino</option><option value="F">Feminino</option><option value="NB">Não binário</option><option value="NI">Prefiro não informar</option></select></div>
+        <div class="fg"><label>Estado civil <span class="opt">(opcional)</span></label><select id="f-ecivil"><option value="">—</option><option>Solteiro(a)</option><option>Casado(a)</option><option>União estável</option><option>Divorciado(a)</option><option>Viúvo(a)</option></select></div>
+      </div>
+      <div class="fg" id="fg-raca">
+        <label>Raça/Cor *</label>
+        <select id="f-raca"><option value="">Selecione...</option><option value="1">Branca</option><option value="2">Preta</option><option value="3">Parda</option><option value="4">Amarela</option><option value="5">Indígena</option><option value="6">Prefiro não declarar</option></select>
+        <span class="hint">Autodeclaração — usada apenas para fins estatísticos e de inclusão.</span>
+        <span class="ferr">Selecione sua raça/cor.</span>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-ttl"><div class="card-dot"></div>Contato</div>
+      <div class="fg" id="fg-tel"><label>Telefone / WhatsApp *</label><input type="tel" id="f-tel" placeholder="(19) 9 0000-0000" inputmode="tel" autocomplete="tel"><span class="ferr">Informe seu telefone.</span></div>
+      <div class="fg" id="fg-email"><label>E-mail *</label><input type="email" id="f-email" placeholder="seu@email.com" inputmode="email" autocomplete="email"><span class="ferr">Informe um e-mail válido.</span></div>
+    </div>
+
+    <div class="card">
+      <div class="card-ttl"><div class="card-dot"></div>Endereço</div>
+      <div class="g2">
+        <div class="fg">
+          <label>CEP <span class="opt">(opcional)</span></label>
+          <div style="display:flex;gap:8px"><input type="text" id="f-cep" placeholder="00000-000" oninput="mCEP(this)" maxlength="9" inputmode="numeric" style="flex:1"><button type="button" onclick="bCEP()" style="padding:10px 12px;border:1px solid var(--brd2);border-radius:var(--r);background:var(--sur);cursor:pointer;font-size:13px;white-space:nowrap">Buscar</button></div>
+          <span class="hint" id="cep-h"></span>
+        </div>
+        <div class="fg"><label>Cidade / UF <span class="opt">(opcional)</span></label><input type="text" id="f-cidade" placeholder="Cidade / SP"></div>
+      </div>
+      <div class="fg"><label>Logradouro <span class="opt">(opcional)</span></label><input type="text" id="f-logr" placeholder="Rua, Avenida..."></div>
+      <div class="g2">
+        <div class="fg"><label>Número <span class="opt">(opcional)</span></label><input type="text" id="f-num"></div>
+        <div class="fg"><label>Bairro <span class="opt">(opcional)</span></label><input type="text" id="f-bairro"></div>
+      </div>
+    </div>
+
+    <div class="btn-row"><button class="btn btn-p" onclick="irE(2)">Próximo →</button></div>
+  </div>
+
+  <!-- ETAPA 2 -->
+  <div id="e2" style="display:none">
+    <div class="card">
+      <div class="card-ttl"><div class="card-dot"></div>Vaga pretendida</div>
+      <div class="fg" id="fg-cargo"><label>Cargo pretendido *</label><select id="f-cargo"><option value="">Selecione...</option></select><span class="ferr">Selecione o cargo pretendido.</span></div>
+      <div class="fg" id="fg-inst"><label>Grau de instrução *</label><select id="f-inst"><option value="">Selecione...</option><option>Sem instrução</option><option>Ensino fundamental incompleto</option><option>Ensino fundamental completo</option><option>Ensino médio incompleto</option><option>Ensino médio completo</option><option>Técnico</option><option>Superior incompleto</option><option>Superior completo</option><option>Pós-graduação</option><option>Mestrado / Doutorado</option></select><span class="ferr">Selecione seu grau de instrução.</span></div>
+      <div class="g2">
+        <div class="fg" id="fg-exp"><label>Tempo de experiência na área *</label><select id="f-exp"><option value="">—</option><option>Sem experiência</option><option>Menos de 1 ano</option><option>1 a 2 anos</option><option>2 a 5 anos</option><option>5 a 10 anos</option><option>Mais de 10 anos</option></select><span class="ferr">Selecione seu tempo de experiência.</span></div>
+        <div class="fg"><label>CNH <span class="opt">(se possuir)</span></label><select id="f-cnh"><option value="">Não possuo</option><option>A</option><option>B</option><option>C</option><option>D</option><option>E</option><option>AB</option></select></div>
+      </div>
+      <div class="fg"><label>Pretensão salarial <span class="opt">(opcional)</span></label><input type="text" id="f-sal" placeholder="R$ 0.000,00" inputmode="numeric"></div>
+    </div>
+
+    <div class="card">
+      <div class="card-ttl"><div class="card-dot"></div>Experiências profissionais <span style="font-size:13px;font-weight:400;color:var(--txt3)">(opcional)</span></div>
+      <div id="exp-lista"><p style="font-size:13px;color:var(--txt3);margin-bottom:.75rem">Adicione suas experiências clicando no botão abaixo.</p></div>
+      <button type="button" class="btn btn-o" onclick="addExp()" style="margin-bottom:1rem">+ Adicionar experiência</button>
+      <div class="fg">
+        <label>Resumo / apresentação <span class="opt">(opcional)</span></label>
+        <textarea id="f-traj" rows="3" placeholder="Conte brevemente sobre você, suas habilidades e o que busca..."></textarea>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-ttl"><div class="card-dot"></div>Cursos e certificações <span style="font-size:13px;font-weight:400;color:var(--txt3)">(opcional)</span></div>
+      <div id="form-lista"></div>
+      <button type="button" class="btn btn-o" onclick="addForm()" style="margin-bottom:1rem">+ Adicionar curso</button>
+    </div>
+
+    <div class="card">
+      <div class="card-ttl"><div class="card-dot"></div>Currículo <span style="font-size:13px;font-weight:400;color:var(--txt3)">(opcional)</span></div>
+      <p style="font-size:13px;color:var(--txt2);margin-bottom:.75rem">Se tiver um currículo em PDF ou Word, envie aqui.</p>
+      <div class="upload-box" id="box-cv">
+        <input type="file" accept=".pdf,.doc,.docx" onchange="handleFile(this,'cv','Currículo')">
+        <div class="upload-box-name">📄 Currículo</div>
+        <div class="upload-box-st" id="st-cv">PDF ou Word — toque para selecionar</div>
+      </div>
+    </div>
+
+    <div class="btn-row">
+      <button class="btn btn-o" onclick="irE(1)">← Voltar</button>
+      <button class="btn btn-p" onclick="enviar()" id="btn-env">Enviar candidatura</button>
+    </div>
+  </div>
+
+  <!-- SUCESSO -->
+  <div class="suc" id="suc">
+    <div class="suc-icon">✅</div>
+    <div class="suc-title">Candidatura enviada!</div>
+    <div class="suc-sub">Seus dados foram recebidos. Nossa equipe de RH entrará em contato pelo telefone e e-mail informados.</div>
+    <div class="suc-card" id="suc-res"></div>
+    <p style="font-size:12px;color:var(--txt3)">Número da candidatura:</p>
+    <p style="font-size:18px;font-weight:500;color:var(--blue);margin-top:4px" id="suc-id"></p>
+  </div>
+</div>
+
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+import { getFirestore, collection, addDoc, getDocs } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+const FC={apiKey:"AIzaSyBAaXDcUgYFjZO3JiiXl5JVpvlybPO7p7A",authDomain:"rp-construbase-rh.firebaseapp.com",projectId:"rp-construbase-rh",storageBucket:"rp-construbase-rh.firebasestorage.app",messagingSenderId:"420511174774",appId:"1:420511174774:web:c2b6ec88346386cad9cf57"};
+const app=initializeApp(FC);
+const db=getFirestore(app);
+let exps=[],forms=[],cvFile=null;
+
+async function init(){
+  const params=new URLSearchParams(window.location.search);
+  const vaga=params.get('vaga');
+  if(vaga) document.getElementById('vaga-wrap').innerHTML=`<div class="vaga-pill">${decodeURIComponent(vaga)}</div>`;
+  try{
+    const snap=await getDocs(collection(db,'cargos'));
+    const cargos=snap.docs.map(d=>d.data()).sort((a,b)=>a.nome.localeCompare(b.nome));
+    const sel=document.getElementById('f-cargo');
+    const op={operacional:[],tecnico:[]};
+    cargos.forEach(c=>(c.perfil==='operacional'?op.operacional:op.tecnico).push(c));
+    if(op.operacional.length){sel.innerHTML+='<optgroup label="Operacional">'+op.operacional.map(c=>`<option>${c.nome}</option>`).join('')+'</optgroup>';}
+    if(op.tecnico.length){sel.innerHTML+='<optgroup label="Técnico / Administrativo">'+op.tecnico.map(c=>`<option>${c.nome}</option>`).join('')+'</optgroup>';}
+    if(vaga) sel.value=decodeURIComponent(vaga);
+  }catch(e){console.log('cargos fallback');}
+}
+
+window.mCPF=function(el){let v=el.value.replace(/\D/g,'').slice(0,11);if(v.length>9)v=v.replace(/(\d{3})(\d{3})(\d{3})(\d)/,'$1.$2.$3-$4');else if(v.length>6)v=v.replace(/(\d{3})(\d{3})(\d)/,'$1.$2.$3');else if(v.length>3)v=v.replace(/(\d{3})(\d)/,'$1.$2');el.value=v;};
+window.mCEP=function(el){let v=el.value.replace(/\D/g,'').slice(0,8);if(v.length>5)v=v.replace(/(\d{5})(\d)/,'$1-$2');el.value=v;};
+function vCPF(c){c=c.replace(/\D/g,'');if(c.length!==11||/^(\d)\1+$/.test(c))return false;let s=0;for(let i=0;i<9;i++)s+=+c[i]*(10-i);let r=s%11<2?0:11-s%11;if(r!==+c[9])return false;s=0;for(let i=0;i<10;i++)s+=+c[i]*(11-i);r=s%11<2?0:11-s%11;return r===+c[10];}
+function vEmail(e){return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(e);}
+window.bCEP=async function(){
+  const cep=document.getElementById('f-cep').value.replace(/\D/g,'');
+  const h=document.getElementById('cep-h');
+  if(cep.length!==8){h.textContent='CEP inválido';return;}h.textContent='Buscando...';
+  try{const r=await fetch(`https://viacep.com.br/ws/${cep}/json/`);const d=await r.json();
+  if(d.erro){h.textContent='CEP não encontrado';return;}
+  document.getElementById('f-logr').value=d.logradouro||'';
+  document.getElementById('f-bairro').value=d.bairro||'';
+  document.getElementById('f-cidade').value=(d.localidade||'')+(d.uf?' / '+d.uf:'');
+  h.textContent='✓ Preenchido';}catch(e){h.textContent='Erro ao buscar';}
+};
+
+function setErr(id,has,msg){const el=document.getElementById(id);if(!el)return;el.classList.toggle('herr',has);if(msg){const e=el.querySelector('.ferr');if(e)e.textContent=msg;}}
+
+window.irE=function(n){
+  if(n===2&&!val1())return;
+  document.getElementById('e1').style.display=n===1?'block':'none';
+  document.getElementById('e2').style.display=n===2?'block':'none';
+  // progress
+  if(n===1){document.getElementById('pc1').className='pc act';document.getElementById('pl1').className='pl act';document.getElementById('pc2').className='pc';document.getElementById('pl2').className='pl';document.getElementById('pl12').className='pline';document.getElementById('pbar').style.width='50%';}
+  else{document.getElementById('pc1').className='pc don';document.getElementById('pc1').textContent='✓';document.getElementById('pl1').className='pl don';document.getElementById('pc2').className='pc act';document.getElementById('pl2').className='pl act';document.getElementById('pl12').className='pline don';document.getElementById('pbar').style.width='100%';}
+  window.scrollTo({top:0,behavior:'smooth'});
+};
+
+function val1(){
+  const nome=document.getElementById('f-nome').value.trim();
+  const cpf=document.getElementById('f-cpf').value.replace(/\D/g,'');
+  const nasc=document.getElementById('f-nasc').value;
+  const tel=document.getElementById('f-tel').value.trim();
+  const email=document.getElementById('f-email').value.trim();
+  const raca=document.getElementById('f-raca').value;
+  setErr('fg-nome',!nome);
+  const cpfInv=!vCPF(cpf);setErr('fg-cpf',cpfInv,cpfInv?'CPF inválido. Verifique os números.':'');
+  setErr('fg-nasc',!nasc);
+  setErr('fg-tel',!tel);
+  const emailInv=!vEmail(email);setErr('fg-email',emailInv,emailInv?'Informe um e-mail válido.':'');
+  setErr('fg-raca',!raca);
+  const ok=nome&&vCPF(cpf)&&nasc&&tel&&vEmail(email)&&raca;
+  if(!ok) setTimeout(()=>document.querySelector('.herr')?.scrollIntoView({behavior:'smooth',block:'center'}),100);
+  return ok;
+}
+
+function val2(){
+  const cargo=document.getElementById('f-cargo').value;
+  const inst=document.getElementById('f-inst').value;
+  const exp=document.getElementById('f-exp').value;
+  setErr('fg-cargo',!cargo);setErr('fg-inst',!inst);setErr('fg-exp',!exp);
+  const ok=cargo&&inst&&exp;
+  if(!ok) setTimeout(()=>document.querySelector('.herr')?.scrollIntoView({behavior:'smooth',block:'center'}),100);
+  return ok;
+}
+
+// EXPERIÊNCIAS
+function saveExps(){exps.forEach(e=>{['emp','cargo','de','ate','vinculo','motivo'].forEach(f=>{const el=document.getElementById(`xe-${f}-${e.id}`);if(el)e[f]=el.value;});});}
+function saveForms(){forms.forEach(f=>{['nome','inst','ano'].forEach(k=>{const el=document.getElementById(`xf-${k}-${f.id}`);if(el)f[k]=el.value;});});}
+function renderExps(){
+  const el=document.getElementById('exp-lista');
+  if(!exps.length){el.innerHTML='<p style="font-size:13px;color:var(--txt3);margin-bottom:.75rem">Adicione suas experiências clicando no botão abaixo.</p>';return;}
+  el.innerHTML=exps.map((e,i)=>`<div class="exp-card"><button type="button" class="exp-del" onclick="delExp(${i})">×</button>
+    <div class="g2" style="margin-bottom:8px"><div class="fg"><label>Empresa</label><input type="text" id="xe-emp-${e.id}" value="${e.emp||''}" placeholder="Nome da empresa"></div><div class="fg"><label>Cargo</label><input type="text" id="xe-cargo-${e.id}" value="${e.cargo||''}" placeholder="Cargo ocupado"></div></div>
+    <div class="g2" style="margin-bottom:8px"><div class="fg"><label>De</label><input type="text" id="xe-de-${e.id}" value="${e.de||''}" placeholder="01/2020"></div><div class="fg"><label>Até</label><input type="text" id="xe-ate-${e.id}" value="${e.ate||''}" placeholder="12/2023 ou atual"></div></div>
+    <div class="g2"><div class="fg"><label>Vínculo</label><select id="xe-vinculo-${e.id}"><option value="">—</option><option ${e.vinculo==='CLT'?'selected':''}>CLT</option><option ${e.vinculo==='PJ'?'selected':''}>PJ</option><option ${e.vinculo==='Temporário'?'selected':''}>Temporário</option><option ${e.vinculo==='Outro'?'selected':''}>Outro</option></select></div>
+    <div class="fg"><label>Motivo de saída</label><select id="xe-motivo-${e.id}"><option value="">—</option><option ${e.motivo==='Demissão sem justa causa'?'selected':''}>Demissão sem justa causa</option><option ${e.motivo==='Pedido de demissão'?'selected':''}>Pedido de demissão</option><option ${e.motivo==='Fim de contrato'?'selected':''}>Fim de contrato</option><option ${e.motivo==='Ainda trabalhando'?'selected':''}>Ainda trabalhando</option><option ${e.motivo==='Outro'?'selected':''}>Outro</option></select></div></div>
+  </div>`).join('');
+}
+function renderForms(){
+  const el=document.getElementById('form-lista');
+  el.innerHTML=forms.map((f,i)=>`<div class="exp-card"><button type="button" class="exp-del" onclick="delForm(${i})">×</button>
+    <div class="g2" style="margin-bottom:8px"><div class="fg"><label>Curso / Certificação</label><input type="text" id="xf-nome-${f.id}" value="${f.nome||''}" placeholder="Nome do curso"></div><div class="fg"><label>Instituição</label><input type="text" id="xf-inst-${f.id}" value="${f.inst||''}" placeholder="SENAI, SENAT..."></div></div>
+    <div class="fg"><label>Ano / Carga horária</label><input type="text" id="xf-ano-${f.id}" value="${f.ano||''}" placeholder="2023 / 40h"></div>
+  </div>`).join('');
+}
+window.addExp=function(){saveExps();exps.push({id:'e'+Date.now()});renderExps();};
+window.delExp=function(i){saveExps();exps.splice(i,1);renderExps();};
+window.addForm=function(){saveForms();forms.push({id:'f'+Date.now()});renderForms();};
+window.delForm=function(i){saveForms();forms.splice(i,1);renderForms();};
+
+// UPLOAD CURRÍCULO
+window.handleFile=function(input,id,label){
+  const file=input.files[0];if(!file)return;
+  if(file.size>10*1024*1024){alert('Arquivo muito grande. Máximo 10MB.');return;}
+  const box=document.getElementById('box-'+id);
+  const st=document.getElementById('st-'+id);
+  const reader=new FileReader();
+  reader.onload=function(e){
+    cvFile={name:file.name,base64:e.target.result.split(',')[1],mimeType:file.type,label};
+    box.classList.add('ok');
+    if(st)st.textContent='✓ '+file.name;
+  };
+  reader.readAsDataURL(file);
+};
+
+// ENVIO
+window.enviar=async function(){
+  if(!val2())return;
+  saveExps();saveForms();
+  const g=id=>{const el=document.getElementById(id);return el?el.value.trim():''};
+  const ov=document.getElementById('ov');
+  const ovTxt=document.getElementById('ov-txt');
+  ov.classList.add('show');ovTxt.textContent='Salvando sua candidatura...';
+  const cand={
+    nome:g('f-nome'),cpf:g('f-cpf'),nasc:g('f-nasc'),sexo:g('f-sexo'),ecivil:g('f-ecivil'),raca:g('f-raca'),
+    tel:g('f-tel'),email:g('f-email'),cep:g('f-cep'),logr:g('f-logr'),num:g('f-num'),bairro:g('f-bairro'),cidade:g('f-cidade'),
+    cargo:g('f-cargo'),inst:g('f-inst'),exp:g('f-exp'),cnh:g('f-cnh')?[g('f-cnh')]:[],sal:g('f-sal'),
+    trajetoria:g('f-traj'),
+    experiencias:exps.map(e=>({empresa:e.emp||'',cargo:e.cargo||'',de:e.de||'',ate:e.ate||'',vinculo:e.vinculo||'',motivo:e.motivo||''})).filter(e=>e.empresa||e.cargo),
+    formacoes:forms.map(f=>({nome:f.nome||'',inst:f.inst||'',ano:f.ano||''})).filter(f=>f.nome),
+    temCurriculo:!!cvFile,nomeCurriculo:cvFile?.name||'',
+    status:'disponivel',origem:'formulario-publico',competencias:[],
+    docsRecebidos:[],docsStatus:{},
+    criadoEm:new Date().toISOString(),criadoPor:'candidato',obs:''
+  };
+  try{
+    const ref=await addDoc(collection(db,'candidatos'),cand);
+    ov.classList.remove('show');
+    document.getElementById('e2').style.display='none';
+    document.getElementById('prog').style.display='none';
+    const suc=document.getElementById('suc');suc.style.display='block';
+    document.getElementById('suc-id').textContent='#'+ref.id.slice(-8).toUpperCase();
+    document.getElementById('suc-res').innerHTML=`<div class="suc-card-ttl">Resumo da candidatura</div>
+      <div class="suc-card-row"><strong>Nome:</strong> ${cand.nome}</div>
+      <div class="suc-card-row"><strong>Cargo:</strong> ${cand.cargo}</div>
+      <div class="suc-card-row"><strong>Telefone:</strong> ${cand.tel}</div>
+      <div class="suc-card-row"><strong>E-mail:</strong> ${cand.email}</div>`;
+    window.scrollTo({top:0,behavior:'smooth'});
+  }catch(e){ov.classList.remove('show');alert('Erro ao enviar: '+e.message);}
+};
+
+init();
+</script>
+</body>
+</html>
