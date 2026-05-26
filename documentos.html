@@ -1,0 +1,262 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Envio de Documentos — RP Construbase</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+:root{--bg:#f8f7f4;--sur:#fff;--brd:#e5e3dc;--brd2:#d0cdc4;--txt:#1a1a18;--txt2:#5a5854;--txt3:#9a9690;--blue:#185FA5;--bbg:#E6F1FB;--btxt:#0C447C;--green:#3B6D11;--gbg:#EAF3DE;--gtxt:#27500A;--amber:#854F0B;--abg:#FAEEDA;--atxt:#633806;--red:#A32D2D;--rbg:#FCEBEB;--rtxt:#791F1F;--r:8px;--rl:12px}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:var(--bg);color:var(--txt);font-size:15px;line-height:1.6;min-height:100vh}
+.wrap{max-width:620px;margin:0 auto;padding:1.5rem 1rem 5rem}
+.hdr{text-align:center;margin-bottom:2rem}
+.hdr-logo{font-size:20px;font-weight:600}
+.hdr-sub{font-size:13px;color:var(--txt3);margin-top:3px}
+.func-card{background:var(--bbg);border:0.5px solid var(--blue);border-radius:var(--rl);padding:1rem 1.25rem;margin-bottom:1.5rem}
+.func-nome{font-size:16px;font-weight:500;color:var(--btxt)}
+.func-cargo{font-size:13px;color:var(--btxt);margin-top:3px;opacity:.8}
+.card{background:var(--sur);border:0.5px solid var(--brd);border-radius:var(--rl);padding:1.25rem;margin-bottom:1rem}
+.card-ttl{font-size:15px;font-weight:500;margin-bottom:1rem;display:flex;align-items:center;gap:8px}
+.card-dot{width:8px;height:8px;border-radius:50%;background:var(--blue);flex-shrink:0}
+.sec-lbl{font-size:12px;font-weight:500;color:var(--txt2);text-transform:uppercase;letter-spacing:.05em;margin:.75rem 0 .5rem}
+.slot{border:1.5px dashed var(--brd2);border-radius:var(--r);padding:14px 14px 12px;cursor:pointer;position:relative;background:var(--sur);transition:all .2s;margin-bottom:8px}
+.slot:hover{border-color:var(--blue);background:var(--bbg)}
+.slot.ok{border-color:var(--green);border-style:solid;background:var(--gbg)}
+.slot.err{border-color:var(--red);border-style:solid;background:var(--rbg)}
+.slot input[type=file]{position:absolute;inset:0;opacity:0;cursor:pointer;width:100%;height:100%}
+.slot-top{display:flex;align-items:center;gap:10px}
+.slot-icon{font-size:22px;flex-shrink:0}
+.slot-info{flex:1}
+.slot-name{font-size:14px;font-weight:500;color:var(--txt)}
+.slot.err .slot-name{color:var(--rtxt)}
+.slot-hint{font-size:12px;color:var(--txt3);margin-top:2px}
+.slot.ok .slot-hint{color:var(--gtxt)}
+.slot.err .slot-hint{color:var(--rtxt)}
+.slot-badge{font-size:10px;padding:2px 7px;border-radius:8px;font-weight:500;flex-shrink:0}
+.badge-obr{background:var(--rbg);color:var(--rtxt)}
+.badge-opt{background:var(--bg);color:var(--txt3);border:0.5px solid var(--brd2)}
+.badge-ok{background:var(--gbg);color:var(--gtxt)}
+.prog-resumo{background:var(--bg);border-radius:var(--r);padding:12px;margin-bottom:1rem}
+.prog-num{font-size:22px;font-weight:500;color:var(--txt)}
+.prog-lbl{font-size:12px;color:var(--txt3);margin-top:2px}
+.prog-bar-wrap{height:6px;background:var(--brd);border-radius:3px;margin-top:8px;overflow:hidden}
+.prog-bar{height:6px;background:var(--green);border-radius:3px;transition:width .3s}
+.warn{background:var(--abg);color:var(--atxt);font-size:13px;padding:10px 12px;border-radius:var(--r);margin-bottom:1rem;border:0.5px solid #EF9F27}
+.btn{padding:12px 20px;border-radius:var(--r);font-size:15px;cursor:pointer;border:1px solid var(--brd2);background:var(--sur);color:var(--txt);font-weight:400;width:100%}
+.btn-p{background:var(--blue);color:#fff;border-color:var(--blue);font-weight:500}
+.btn-p:hover{opacity:.9}
+.btn-p:disabled{opacity:.5;cursor:not-allowed}
+.suc{display:none;text-align:center;padding:2.5rem 1rem}
+.suc-icon{font-size:56px;margin-bottom:1rem}
+.suc-title{font-size:22px;font-weight:500;margin-bottom:.5rem}
+.suc-sub{font-size:14px;color:var(--txt2);line-height:1.6}
+.err-screen{display:none;text-align:center;padding:3rem 1rem}
+.ov{display:none;position:fixed;inset:0;background:rgba(255,255,255,.9);z-index:100;align-items:center;justify-content:center;flex-direction:column;gap:12px}
+.ov.show{display:flex}
+.spin{width:40px;height:40px;border:3px solid var(--brd2);border-top-color:var(--blue);border-radius:50%;animation:sp .8s linear infinite}
+@keyframes sp{to{transform:rotate(360deg)}}
+.spin-txt{font-size:14px;color:var(--txt2)}
+</style>
+</head>
+<body>
+<div class="ov" id="ov"><div class="spin"></div><div class="spin-txt" id="ov-txt">Salvando...</div></div>
+<div class="wrap">
+  <div class="hdr">
+    <div class="hdr-logo">RP Construbase</div>
+    <div class="hdr-sub">Envio de documentos para admissão</div>
+  </div>
+
+  <div id="main-content">
+    <div id="func-info" class="func-card" style="display:none">
+      <div class="func-nome" id="func-nome">—</div>
+      <div class="func-cargo" id="func-cargo">—</div>
+    </div>
+
+    <div class="card">
+      <div class="card-ttl"><div class="card-dot"></div>Documentos para envio</div>
+      <p style="font-size:13px;color:var(--txt2);margin-bottom:1rem;line-height:1.6">Fotografe ou escaneie cada documento e envie abaixo. Aceite foto tirada pelo celular (JPG/PNG) ou PDF. Tamanho máximo: 10MB por arquivo.</p>
+
+      <div class="prog-resumo">
+        <div style="display:flex;justify-content:space-between;align-items:center">
+          <div><div class="prog-num" id="prog-num">0</div><div class="prog-lbl" id="prog-lbl">documentos enviados</div></div>
+          <div style="text-align:right"><div class="prog-num" id="obr-num" style="color:var(--rtxt)">0</div><div class="prog-lbl">obrigatórios faltando</div></div>
+        </div>
+        <div class="prog-bar-wrap"><div class="prog-bar" id="prog-bar" style="width:0%"></div></div>
+      </div>
+
+      <div id="docs-obr"></div>
+      <div id="docs-opt-wrap" style="display:none">
+        <div class="sec-lbl">Documentos opcionais</div>
+        <div id="docs-opt"></div>
+      </div>
+    </div>
+
+    <div class="warn">Seus documentos serão usados exclusivamente para fins de contratação e registros legais trabalhistas. As informações são confidenciais.</div>
+
+    <button class="btn btn-p" onclick="enviar()" id="btn-env">Enviar documentos</button>
+    <p style="font-size:12px;color:var(--txt3);text-align:center;margin-top:.75rem" id="falta-msg"></p>
+  </div>
+
+  <div class="err-screen" id="err-screen">
+    <div style="font-size:48px;margin-bottom:1rem">⚠️</div>
+    <div style="font-size:18px;font-weight:500;margin-bottom:.5rem">Link inválido</div>
+    <div style="font-size:14px;color:var(--txt2)">Este link não é válido ou já expirou. Entre em contato com o RH.</div>
+  </div>
+
+  <div class="suc" id="suc">
+    <div class="suc-icon">✅</div>
+    <div class="suc-title">Documentos enviados!</div>
+    <div class="suc-sub">Seus documentos foram recebidos com sucesso. O RH dará continuidade ao processo de admissão e entrará em contato em breve.</div>
+  </div>
+</div>
+
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+import { getFirestore, collection, doc, getDoc, getDocs, updateDoc } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+const FC={apiKey:"AIzaSyBAaXDcUgYFjZO3JiiXl5JVpvlybPO7p7A",authDomain:"rp-construbase-rh.firebaseapp.com",projectId:"rp-construbase-rh",storageBucket:"rp-construbase-rh.firebasestorage.app",messagingSenderId:"420511174774",appId:"1:420511174774:web:c2b6ec88346386cad9cf57"};
+const app=initializeApp(FC);
+const db=getFirestore(app);
+
+let candId=null;
+let candData=null;
+let docsConfig=[];
+let uploadedFiles={};
+
+async function init(){
+  const params=new URLSearchParams(window.location.search);
+  candId=params.get('cid');
+  if(!candId){showErr();return;}
+  try{
+    // Carregar candidato
+    const snap=await getDoc(doc(db,'candidatos',candId));
+    if(!snap.exists()){showErr();return;}
+    candData=snap.data();
+    // Mostrar info do funcionário
+    document.getElementById('func-info').style.display='block';
+    document.getElementById('func-nome').textContent=candData.nome||'—';
+    document.getElementById('func-cargo').textContent=(candData.cargo||'—')+(candData.empresa&&candData.empresa!=='qualquer'?' — '+candData.empresa:'');
+    // Carregar config de documentos
+    const docSnap=await getDocs(collection(db,'documentos'));
+    docsConfig=docSnap.docs.map(d=>({id:d.id,...d.data()})).sort((a,b)=>{if(a.obrigatorio&&!b.obrigatorio)return -1;if(!a.obrigatorio&&b.obrigatorio)return 1;return(a.ordem||99)-(b.ordem||99);});
+    if(docsConfig.length===0){
+      // Default se não configurado
+      docsConfig=[
+        {id:'foto',nome:'Foto 3x4',hint:'Foto recente, fundo claro',obrigatorio:true,ordem:1},
+        {id:'rg',nome:'RG (frente e verso)',hint:'Documento de identidade',obrigatorio:true,ordem:2},
+        {id:'cpf',nome:'CPF',hint:'Cartão físico ou foto no app Receita Federal',obrigatorio:true,ordem:3},
+        {id:'compresid',nome:'Comprovante de residência',hint:'Conta de água, luz ou telefone recente',obrigatorio:true,ordem:4},
+        {id:'pis',nome:'PIS/PASEP',hint:'Carteira de trabalho, app CTPS Digital ou extrato FGTS',obrigatorio:true,ordem:5},
+        {id:'ctps',nome:'Carteira de Trabalho (CTPS)',hint:'Página com foto e dados pessoais',obrigatorio:true,ordem:6},
+        {id:'cnh',nome:'CNH',hint:'Se o cargo exigir ou se possuir',obrigatorio:false,ordem:7},
+        {id:'reservista',nome:'Certificado de reservista',hint:'Obrigatório para homens',obrigatorio:false,ordem:8},
+        {id:'casamento',nome:'Certidão de casamento',hint:'Se casado(a)',obrigatorio:false,ordem:9},
+        {id:'filhos',nome:'Certidão de nascimento dos filhos',hint:'Filhos menores de 21 anos',obrigatorio:false,ordem:10},
+        {id:'vacina',nome:'Carteira de vacinação dos filhos',hint:'Filhos até 7 anos',obrigatorio:false,ordem:11},
+      ];
+    }
+    renderDocs();
+  }catch(e){showErr();}
+}
+
+function renderDocs(){
+  const obr=docsConfig.filter(d=>d.obrigatorio);
+  const opt=docsConfig.filter(d=>!d.obrigatorio);
+  const obrEl=document.getElementById('docs-obr');
+  const optEl=document.getElementById('docs-opt');
+  const optWrap=document.getElementById('docs-opt-wrap');
+  if(obr.length){
+    obrEl.innerHTML='<div class="sec-lbl">Documentos obrigatórios</div>'+obr.map(d=>slotHtml(d)).join('');
+  }
+  if(opt.length){
+    optWrap.style.display='block';
+    optEl.innerHTML=opt.map(d=>slotHtml(d)).join('');
+  }
+  atualizarProg();
+}
+
+function slotHtml(d){
+  const uploaded=uploadedFiles[d.id];
+  const cls=uploaded?'ok':'';
+  const badge=uploaded?'<span class="slot-badge badge-ok">✓ Enviado</span>':d.obrigatorio?'<span class="slot-badge badge-obr">Obrigatório</span>':'<span class="slot-badge badge-opt">Opcional</span>';
+  const hint=uploaded?'✓ '+uploadedFiles[d.id].name:d.hint||'Toque para enviar';
+  return`<div class="slot ${cls}" id="slot-${d.id}">
+    <input type="file" accept="image/*,.pdf" capture="environment" onchange="handleFile(this,'${d.id}','${d.nome}')">
+    <div class="slot-top">
+      <div class="slot-icon">${uploaded?'✅':'📎'}</div>
+      <div class="slot-info"><div class="slot-name">${d.nome}</div><div class="slot-hint" id="hint-${d.id}">${hint}</div></div>
+      ${badge}
+    </div>
+  </div>`;
+}
+
+function atualizarProg(){
+  const total=docsConfig.length;
+  const enviados=Object.keys(uploadedFiles).length;
+  const obrFaltando=docsConfig.filter(d=>d.obrigatorio&&!uploadedFiles[d.id]).length;
+  document.getElementById('prog-num').textContent=enviados;
+  document.getElementById('prog-lbl').textContent=`de ${total} documento${total!==1?'s':''} enviado${enviados!==1?'s':''}`;
+  document.getElementById('obr-num').textContent=obrFaltando;
+  document.getElementById('prog-bar').style.width=total>0?(enviados/total*100)+'%':'0%';
+  if(obrFaltando>0){
+    document.getElementById('falta-msg').textContent=`${obrFaltando} documento${obrFaltando!==1?'s obrigatórios faltam':' obrigatório falta'} para enviar.`;
+    document.getElementById('falta-msg').style.color='var(--rtxt)';
+  } else {
+    document.getElementById('falta-msg').textContent='✓ Todos os documentos obrigatórios foram enviados!';
+    document.getElementById('falta-msg').style.color='var(--gtxt)';
+  }
+}
+
+window.handleFile=function(input,docId,docNome){
+  const file=input.files[0];if(!file)return;
+  if(file.size>10*1024*1024){alert('Arquivo muito grande. Máximo: 10MB.');return;}
+  const slot=document.getElementById('slot-'+docId);
+  const hint=document.getElementById('hint-'+docId);
+  if(slot) slot.classList.add('ok');
+  if(hint) hint.textContent='Carregando...';
+  const reader=new FileReader();
+  reader.onload=function(e){
+    uploadedFiles[docId]={name:file.name,base64:e.target.result.split(',')[1],mimeType:file.type,label:docNome};
+    renderDocs(); // Re-renderiza com estado atualizado
+    atualizarProg();
+  };
+  reader.readAsDataURL(file);
+};
+
+window.enviar=async function(){
+  const obrFaltando=docsConfig.filter(d=>d.obrigatorio&&!uploadedFiles[d.id]);
+  if(obrFaltando.length>0){
+    // Destacar os que faltam
+    obrFaltando.forEach(d=>{const s=document.getElementById('slot-'+d.id);if(s)s.classList.add('err');});
+    alert(`Envie os documentos obrigatórios antes de continuar:\n\n${obrFaltando.map(d=>'• '+d.nome).join('\n')}`);
+    setTimeout(()=>document.querySelector('.slot.err')?.scrollIntoView({behavior:'smooth',block:'center'}),100);
+    return;
+  }
+  const ov=document.getElementById('ov');
+  ov.classList.add('show');
+  document.getElementById('ov-txt').textContent='Salvando documentos...';
+  try{
+    const docsRecebidos=Object.keys(uploadedFiles);
+    const docsStatus={};
+    docsConfig.forEach(d=>{docsStatus[d.id]={recebido:!!uploadedFiles[d.id],nome:uploadedFiles[d.id]?.name||'',obrigatorio:d.obrigatorio};});
+    await updateDoc(doc(db,'candidatos',candId),{
+      docsRecebidos,docsStatus,
+      docsEnviadoEm:new Date().toISOString(),
+      status:'processo',
+      atualizadoEm:new Date().toISOString()
+    });
+    ov.classList.remove('show');
+    document.getElementById('main-content').style.display='none';
+    document.getElementById('suc').style.display='block';
+    window.scrollTo({top:0,behavior:'smooth'});
+  }catch(e){ov.classList.remove('show');alert('Erro ao salvar: '+e.message);}
+};
+
+function showErr(){
+  document.getElementById('main-content').style.display='none';
+  document.getElementById('err-screen').style.display='block';
+}
+
+init();
+</script>
+</body>
+</html>
