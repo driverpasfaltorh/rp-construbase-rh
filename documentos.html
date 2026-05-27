@@ -3,149 +3,273 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Envio de Documentos — RP Construbase</title>
+<title>Completar cadastro — RP Construbase</title>
 <style>
 *{box-sizing:border-box;margin:0;padding:0}
 :root{--bg:#f8f7f4;--sur:#fff;--brd:#e5e3dc;--brd2:#d0cdc4;--txt:#1a1a18;--txt2:#5a5854;--txt3:#9a9690;--blue:#185FA5;--bbg:#E6F1FB;--btxt:#0C447C;--green:#3B6D11;--gbg:#EAF3DE;--gtxt:#27500A;--amber:#854F0B;--abg:#FAEEDA;--atxt:#633806;--red:#A32D2D;--rbg:#FCEBEB;--rtxt:#791F1F;--r:8px;--rl:12px}
 body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:var(--bg);color:var(--txt);font-size:15px;line-height:1.6;min-height:100vh}
-.wrap{max-width:620px;margin:0 auto;padding:1.5rem 1rem 5rem}
+.wrap{max-width:640px;margin:0 auto;padding:1.5rem 1rem 5rem}
 .hdr{text-align:center;margin-bottom:2rem}
 .hdr-logo{font-size:20px;font-weight:600}
 .hdr-sub{font-size:13px;color:var(--txt3);margin-top:3px}
 .func-card{background:var(--bbg);border:0.5px solid var(--blue);border-radius:var(--rl);padding:1rem 1.25rem;margin-bottom:1.5rem}
 .func-nome{font-size:16px;font-weight:500;color:var(--btxt)}
 .func-cargo{font-size:13px;color:var(--btxt);margin-top:3px;opacity:.8}
+/* tabs */
+.tab-nav{display:flex;background:var(--sur);border:0.5px solid var(--brd);border-radius:var(--rl);padding:4px;margin-bottom:1.5rem;gap:4px}
+.tab-btn{flex:1;padding:10px;border:none;background:none;border-radius:var(--r);font-size:14px;cursor:pointer;color:var(--txt2);font-weight:400;transition:all .2s}
+.tab-btn.active{background:var(--blue);color:#fff;font-weight:500}
+.tab-pane{display:none}.tab-pane.active{display:block}
+/* cards */
 .card{background:var(--sur);border:0.5px solid var(--brd);border-radius:var(--rl);padding:1.25rem;margin-bottom:1rem}
 .card-ttl{font-size:15px;font-weight:500;margin-bottom:1rem;display:flex;align-items:center;gap:8px}
-.card-dot{width:8px;height:8px;border-radius:50%;background:var(--blue);flex-shrink:0}
-.sec-lbl{font-size:12px;font-weight:500;color:var(--txt2);text-transform:uppercase;letter-spacing:.05em;margin:.75rem 0 .5rem}
-.slot{border:1.5px dashed var(--brd2);border-radius:var(--r);padding:14px 14px 12px;cursor:pointer;position:relative;background:var(--sur);transition:all .2s;margin-bottom:8px}
+.card-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0}
+.cd-blue{background:var(--blue)}.cd-green{background:var(--green)}.cd-amber{background:var(--amber)}.cd-purple{background:#534AB7}
+/* forms */
+.fg{display:flex;flex-direction:column;gap:4px;margin-bottom:1rem}
+.fg label{font-size:13px;color:var(--txt2);font-weight:500}
+.fg .opt{font-weight:400;color:var(--txt3);font-size:12px}
+.fg .preenchido{font-size:11px;color:var(--gtxt);margin-top:2px}
+.fg input,.fg select,.fg textarea{font-size:15px;padding:10px 12px;border:1px solid var(--brd2);border-radius:var(--r);background:var(--sur);color:var(--txt);width:100%;-webkit-appearance:none}
+.fg input:focus,.fg select:focus,.fg textarea:focus{outline:none;border-color:var(--blue);box-shadow:0 0 0 3px rgba(24,95,165,.1)}
+.fg input.ja-tem{background:#f0fdf4;border-color:var(--green);color:var(--gtxt)}
+.fg .hint{font-size:12px;color:var(--txt3)}
+.g2{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.g3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px}
+/* progresso docs */
+.prog-resumo{background:var(--bg);border-radius:var(--r);padding:12px;margin-bottom:1rem}
+.prog-nums{display:flex;justify-content:space-between;align-items:center;margin-bottom:6px}
+.prog-n{font-size:20px;font-weight:500}
+.prog-l{font-size:11px;color:var(--txt3);margin-top:1px}
+.pbar-wrap{height:6px;background:var(--brd);border-radius:3px;overflow:hidden}
+.pbar{height:6px;background:var(--green);border-radius:3px;transition:width .3s}
+/* slots upload */
+.slot{border:1.5px dashed var(--brd2);border-radius:var(--r);padding:14px;cursor:pointer;position:relative;background:var(--sur);transition:all .2s;margin-bottom:8px}
 .slot:hover{border-color:var(--blue);background:var(--bbg)}
 .slot.ok{border-color:var(--green);border-style:solid;background:var(--gbg)}
-.slot.err{border-color:var(--red);border-style:solid;background:var(--rbg)}
+.slot.falta{border-color:var(--red);border-style:solid;background:var(--rbg)}
 .slot input[type=file]{position:absolute;inset:0;opacity:0;cursor:pointer;width:100%;height:100%}
 .slot-top{display:flex;align-items:center;gap:10px}
-.slot-icon{font-size:22px;flex-shrink:0}
+.slot-icon{font-size:20px;flex-shrink:0}
 .slot-info{flex:1}
-.slot-name{font-size:14px;font-weight:500;color:var(--txt)}
-.slot.err .slot-name{color:var(--rtxt)}
+.slot-name{font-size:14px;font-weight:500}
+.slot.falta .slot-name{color:var(--rtxt)}
 .slot-hint{font-size:12px;color:var(--txt3);margin-top:2px}
 .slot.ok .slot-hint{color:var(--gtxt)}
-.slot.err .slot-hint{color:var(--rtxt)}
-.slot-badge{font-size:10px;padding:2px 7px;border-radius:8px;font-weight:500;flex-shrink:0}
-.badge-obr{background:var(--rbg);color:var(--rtxt)}
-.badge-opt{background:var(--bg);color:var(--txt3);border:0.5px solid var(--brd2)}
-.badge-ok{background:var(--gbg);color:var(--gtxt)}
-.prog-resumo{background:var(--bg);border-radius:var(--r);padding:12px;margin-bottom:1rem}
-.prog-num{font-size:22px;font-weight:500;color:var(--txt)}
-.prog-lbl{font-size:12px;color:var(--txt3);margin-top:2px}
-.prog-bar-wrap{height:6px;background:var(--brd);border-radius:3px;margin-top:8px;overflow:hidden}
-.prog-bar{height:6px;background:var(--green);border-radius:3px;transition:width .3s}
+.slot.falta .slot-hint{color:var(--rtxt)}
+.badge{font-size:10px;padding:2px 8px;border-radius:8px;font-weight:500;flex-shrink:0}
+.b-obr{background:var(--rbg);color:var(--rtxt)}
+.b-opt{background:var(--bg);color:var(--txt3);border:0.5px solid var(--brd2)}
+.b-ok{background:var(--gbg);color:var(--gtxt)}
+.sec-lbl{font-size:12px;font-weight:500;color:var(--txt2);text-transform:uppercase;letter-spacing:.05em;margin:.75rem 0 .5rem;padding-top:.25rem}
 .warn{background:var(--abg);color:var(--atxt);font-size:13px;padding:10px 12px;border-radius:var(--r);margin-bottom:1rem;border:0.5px solid #EF9F27}
+/* botões */
 .btn{padding:12px 20px;border-radius:var(--r);font-size:15px;cursor:pointer;border:1px solid var(--brd2);background:var(--sur);color:var(--txt);font-weight:400;width:100%}
 .btn-p{background:var(--blue);color:#fff;border-color:var(--blue);font-weight:500}
-.btn-p:hover{opacity:.9}
-.btn-p:disabled{opacity:.5;cursor:not-allowed}
+.btn-p:hover{opacity:.9}.btn-p:disabled{opacity:.5;cursor:not-allowed}
+.btn-sec{color:var(--txt2)}
+.btn-row{display:flex;gap:10px;margin-top:1.5rem}
+.btn-row .btn{flex:1}
+/* sucesso */
 .suc{display:none;text-align:center;padding:2.5rem 1rem}
 .suc-icon{font-size:56px;margin-bottom:1rem}
 .suc-title{font-size:22px;font-weight:500;margin-bottom:.5rem}
 .suc-sub{font-size:14px;color:var(--txt2);line-height:1.6}
+/* erro */
 .err-screen{display:none;text-align:center;padding:3rem 1rem}
+/* loading */
 .ov{display:none;position:fixed;inset:0;background:rgba(255,255,255,.9);z-index:100;align-items:center;justify-content:center;flex-direction:column;gap:12px}
 .ov.show{display:flex}
 .spin{width:40px;height:40px;border:3px solid var(--brd2);border-top-color:var(--blue);border-radius:50%;animation:sp .8s linear infinite}
 @keyframes sp{to{transform:rotate(360deg)}}
 .spin-txt{font-size:14px;color:var(--txt2)}
+@media(max-width:480px){.g2{grid-template-columns:1fr}.g3{grid-template-columns:1fr}.btn-row{flex-direction:column-reverse}}
 </style>
 </head>
 <body>
 <div class="ov" id="ov"><div class="spin"></div><div class="spin-txt" id="ov-txt">Salvando...</div></div>
+
 <div class="wrap">
   <div class="hdr">
     <div class="hdr-logo">RP Construbase</div>
-    <div class="hdr-sub">Envio de documentos para admissão</div>
+    <div class="hdr-sub">Completar cadastro para admissão</div>
   </div>
 
-  <div id="main-content">
-    <div id="func-info" class="func-card" style="display:none">
-      <div class="func-nome" id="func-nome">—</div>
-      <div class="func-cargo" id="func-cargo">—</div>
+  <!-- CONTEÚDO PRINCIPAL -->
+  <div id="main">
+    <div class="func-card" id="func-card" style="display:none">
+      <div class="func-nome" id="func-nome"></div>
+      <div class="func-cargo" id="func-cargo"></div>
     </div>
 
-    <div class="card">
-      <div class="card-ttl"><div class="card-dot"></div>Documentos para envio</div>
-      <p style="font-size:13px;color:var(--txt2);margin-bottom:1rem;line-height:1.6">Fotografe ou escaneie cada documento e envie abaixo. Aceite foto tirada pelo celular (JPG/PNG) ou PDF. Tamanho máximo: 10MB por arquivo.</p>
+    <!-- TABS -->
+    <div class="tab-nav">
+      <button class="tab-btn active" onclick="irTab(1,this)" id="tab1-btn">📋 Dados pessoais</button>
+      <button class="tab-btn" onclick="irTab(2,this)" id="tab2-btn">📄 Documentos</button>
+    </div>
 
-      <div class="prog-resumo">
-        <div style="display:flex;justify-content:space-between;align-items:center">
-          <div><div class="prog-num" id="prog-num">0</div><div class="prog-lbl" id="prog-lbl">documentos enviados</div></div>
-          <div style="text-align:right"><div class="prog-num" id="obr-num" style="color:var(--rtxt)">0</div><div class="prog-lbl">obrigatórios faltando</div></div>
+    <!-- TAB 1: DADOS COMPLEMENTARES -->
+    <div id="tab1" class="tab-pane active">
+      <div class="info-box" style="background:var(--bbg);color:var(--btxt);font-size:13px;padding:10px 12px;border-radius:var(--r);margin-bottom:1rem;border:0.5px solid var(--blue)">
+        Os campos marcados com 🟢 já foram preenchidos na candidatura. Complete os campos em branco.
+      </div>
+
+      <!-- Documentos pessoais -->
+      <div class="card">
+        <div class="card-ttl"><div class="card-dot cd-blue"></div>Documentos pessoais</div>
+        <div class="g3">
+          <div class="fg"><label>RG</label><input type="text" id="d-rg" placeholder="00.000.000-0"><span class="hint">Número do documento de identidade</span></div>
+          <div class="fg"><label>Órgão emissor/UF</label><input type="text" id="d-rgorg" placeholder="SSP/SP"></div>
+          <div class="fg"><label>PIS/PASEP</label><input type="text" id="d-pis" placeholder="000.00000.00-0" oninput="mPIS(this)" maxlength="14"><span class="hint">Encontrado na CTPS ou app FGTS</span></div>
         </div>
-        <div class="prog-bar-wrap"><div class="prog-bar" id="prog-bar" style="width:0%"></div></div>
+        <div class="g2">
+          <div class="fg"><label>Nome da mãe *</label><input type="text" id="d-mae" placeholder="Nome completo da mãe"></div>
+          <div class="fg"><label>Nome do pai</label><input type="text" id="d-pai" placeholder="Nome completo ou desconhecido"></div>
+        </div>
+        <div class="g2">
+          <div class="fg"><label>Município de nascimento</label><input type="text" id="d-natmun" placeholder="Cidade onde nasceu"></div>
+          <div class="fg"><label>País de nascimento</label><select id="d-natpais"><option>Brasil</option><option>Portugal</option><option>Argentina</option><option>Paraguai</option><option>Bolívia</option><option>Outro</option></select></div>
+        </div>
+        <div class="g2">
+          <div class="fg"><label>Possui deficiência (PCD)?</label><select id="d-pcd" onchange="tPCD()"><option value="nao">Não</option><option value="sim">Sim</option><option value="ni">Prefiro não informar</option></select></div>
+          <div class="fg" id="d-pcdtw" style="display:none"><label>Tipo de deficiência</label><select id="d-pcdt"><option value="">—</option><option>Física</option><option>Visual</option><option>Auditiva</option><option>Intelectual</option><option>Psicossocial</option><option>Múltipla</option></select></div>
+        </div>
       </div>
 
-      <div id="docs-obr"></div>
-      <div id="docs-opt-wrap" style="display:none">
-        <div class="sec-lbl">Documentos opcionais</div>
-        <div id="docs-opt"></div>
+      <!-- Endereço complementar -->
+      <div class="card">
+        <div class="card-ttl"><div class="card-dot cd-blue"></div>Endereço completo</div>
+        <div class="g2">
+          <div class="fg">
+            <label>CEP</label>
+            <div style="display:flex;gap:8px"><input type="text" id="d-cep" placeholder="00000-000" oninput="mCEP(this)" maxlength="9" inputmode="numeric" style="flex:1"><button type="button" onclick="bCEP()" style="padding:10px 12px;border:1px solid var(--brd2);border-radius:var(--r);background:var(--sur);cursor:pointer;font-size:13px;white-space:nowrap">Buscar</button></div>
+            <span class="hint" id="cep-h"></span>
+          </div>
+          <div class="fg"><label>Cidade/UF</label><input type="text" id="d-cidade" placeholder="Cidade / SP"></div>
+        </div>
+        <div class="fg"><label>Logradouro</label><input type="text" id="d-logr" placeholder="Rua, Avenida..."></div>
+        <div class="g3">
+          <div class="fg"><label>Número</label><input type="text" id="d-num" placeholder="000"></div>
+          <div class="fg"><label>Complemento</label><input type="text" id="d-comp" placeholder="Apto..."></div>
+          <div class="fg"><label>Bairro</label><input type="text" id="d-bairro" placeholder="Bairro"></div>
+        </div>
+      </div>
+
+      <!-- Dados bancários -->
+      <div class="card">
+        <div class="card-ttl"><div class="card-dot cd-amber"></div>Dados bancários</div>
+        <p style="font-size:13px;color:var(--txt2);margin-bottom:1rem">Informe a conta onde deseja receber seu salário.</p>
+        <div class="g3">
+          <div class="fg"><label>Banco *</label><input type="text" id="d-banco" placeholder="Nome do banco"></div>
+          <div class="fg"><label>Agência *</label><input type="text" id="d-agencia" placeholder="0000" inputmode="numeric"></div>
+          <div class="fg"><label>Conta *</label><input type="text" id="d-conta" placeholder="00000-0" inputmode="numeric"></div>
+        </div>
+        <div class="fg"><label>Chave PIX <span class="opt">(opcional)</span></label><input type="text" id="d-pix" placeholder="CPF, e-mail ou telefone"></div>
+      </div>
+
+      <!-- Uniforme -->
+      <div class="card">
+        <div class="card-ttl"><div class="card-dot cd-purple"></div>Uniforme e EPI</div>
+        <p style="font-size:13px;color:var(--txt2);margin-bottom:1rem">Informações para providenciar seu uniforme e equipamentos.</p>
+        <div class="g3">
+          <div class="fg"><label>Tamanho camisa *</label><select id="d-camisa"><option value="">—</option><option>PP</option><option>P</option><option>M</option><option>G</option><option>GG</option><option>XGG</option></select></div>
+          <div class="fg"><label>Tamanho calça *</label><input type="text" id="d-calca" placeholder="38, 40, 42..." inputmode="numeric"></div>
+          <div class="fg"><label>Nº calçado segurança *</label><input type="text" id="d-calcado" placeholder="38, 40, 42..." inputmode="numeric"></div>
+        </div>
+        <div class="fg"><label>Usa óculos de grau?</label><select id="d-oculos"><option value="">—</option><option value="nao">Não</option><option value="sim">Sim — preciso de óculos de proteção graduados</option></select></div>
+      </div>
+
+      <div class="btn-row">
+        <button class="btn btn-p" onclick="irTab(2,document.getElementById('tab2-btn'))">Próximo: Documentos →</button>
       </div>
     </div>
 
-    <div class="warn">Seus documentos serão usados exclusivamente para fins de contratação e registros legais trabalhistas. As informações são confidenciais.</div>
+    <!-- TAB 2: DOCUMENTOS -->
+    <div id="tab2" class="tab-pane">
+      <div class="card">
+        <div class="card-ttl"><div class="card-dot cd-green"></div>Envio de documentos</div>
+        <p style="font-size:13px;color:var(--txt2);margin-bottom:1rem;line-height:1.6">Fotografe ou escaneie cada documento. Aceita foto do celular (JPG/PNG) ou PDF. Máximo 10MB por arquivo.</p>
 
-    <button class="btn btn-p" onclick="enviar()" id="btn-env">Enviar documentos</button>
-    <p style="font-size:12px;color:var(--txt3);text-align:center;margin-top:.75rem" id="falta-msg"></p>
+        <div class="prog-resumo">
+          <div class="prog-nums">
+            <div><div class="prog-n" id="prog-n">0</div><div class="prog-l" id="prog-l">documentos enviados</div></div>
+            <div style="text-align:right"><div class="prog-n" id="falta-n" style="color:var(--rtxt)">0</div><div class="prog-l">obrigatórios faltando</div></div>
+          </div>
+          <div class="pbar-wrap"><div class="pbar" id="pbar" style="width:0%"></div></div>
+        </div>
+
+        <div id="slots-obr"></div>
+        <div id="slots-opt-wrap" style="display:none">
+          <div class="sec-lbl">Documentos opcionais</div>
+          <div id="slots-opt"></div>
+        </div>
+      </div>
+
+      <div class="warn">Seus documentos serão usados exclusivamente para fins de contratação e registros trabalhistas. As informações são confidenciais.</div>
+
+      <button class="btn btn-p" onclick="enviar()" id="btn-env">Enviar tudo</button>
+      <p style="font-size:12px;color:var(--txt3);text-align:center;margin-top:.75rem" id="falta-msg"></p>
+
+      <div class="btn-row" style="margin-top:.5rem">
+        <button class="btn btn-sec" onclick="irTab(1,document.getElementById('tab1-btn'))">← Voltar para dados pessoais</button>
+      </div>
+    </div>
   </div>
 
+  <!-- ERRO -->
   <div class="err-screen" id="err-screen">
     <div style="font-size:48px;margin-bottom:1rem">⚠️</div>
     <div style="font-size:18px;font-weight:500;margin-bottom:.5rem">Link inválido</div>
     <div style="font-size:14px;color:var(--txt2)">Este link não é válido ou já expirou. Entre em contato com o RH.</div>
   </div>
 
+  <!-- SUCESSO -->
   <div class="suc" id="suc">
     <div class="suc-icon">✅</div>
-    <div class="suc-title">Documentos enviados!</div>
-    <div class="suc-sub">Seus documentos foram recebidos com sucesso. O RH dará continuidade ao processo de admissão e entrará em contato em breve.</div>
+    <div class="suc-title">Cadastro completo!</div>
+    <div class="suc-sub">Seus dados e documentos foram recebidos com sucesso.<br>O RH entrará em contato em breve para dar continuidade ao processo.</div>
   </div>
 </div>
 
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
 import { getFirestore, collection, doc, getDoc, getDocs, updateDoc } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+
 const FC={apiKey:"AIzaSyBAaXDcUgYFjZO3JiiXl5JVpvlybPO7p7A",authDomain:"rp-construbase-rh.firebaseapp.com",projectId:"rp-construbase-rh",storageBucket:"rp-construbase-rh.firebasestorage.app",messagingSenderId:"420511174774",appId:"1:420511174774:web:c2b6ec88346386cad9cf57"};
 const app=initializeApp(FC);
 const db=getFirestore(app);
 
-let candId=null;
-let candData=null;
-let docsConfig=[];
-let uploadedFiles={};
+let candId=null, candData=null, docsConfig=[], uploadedFiles={};
 
 async function init(){
   const params=new URLSearchParams(window.location.search);
   candId=params.get('cid');
   if(!candId){showErr();return;}
   try{
-    // Carregar candidato
     const snap=await getDoc(doc(db,'candidatos',candId));
     if(!snap.exists()){showErr();return;}
     candData=snap.data();
-    // Mostrar info do funcionário
-    document.getElementById('func-info').style.display='block';
+
+    // Mostrar info do candidato
+    document.getElementById('func-card').style.display='block';
     document.getElementById('func-nome').textContent=candData.nome||'—';
     document.getElementById('func-cargo').textContent=(candData.cargo||'—')+(candData.empresa&&candData.empresa!=='qualquer'?' — '+candData.empresa:'');
+
+    // Pré-preencher campos já existentes
+    preencherCampos();
+
     // Carregar config de documentos
-    const docSnap=await getDocs(collection(db,'documentos'));
-    docsConfig=docSnap.docs.map(d=>({id:d.id,...d.data()})).sort((a,b)=>{if(a.obrigatorio&&!b.obrigatorio)return -1;if(!a.obrigatorio&&b.obrigatorio)return 1;return(a.ordem||99)-(b.ordem||99);});
+    try{
+      const docSnap=await getDocs(collection(db,'documentos'));
+      docsConfig=docSnap.docs.map(d=>({id:d.id,...d.data()})).sort((a,b)=>(a.ordem||99)-(b.ordem||99));
+    }catch(e){}
     if(docsConfig.length===0){
-      // Default se não configurado
       docsConfig=[
         {id:'foto',nome:'Foto 3x4',hint:'Foto recente, fundo claro',obrigatorio:true,ordem:1},
         {id:'rg',nome:'RG (frente e verso)',hint:'Documento de identidade',obrigatorio:true,ordem:2},
-        {id:'cpf',nome:'CPF',hint:'Cartão físico ou foto no app Receita Federal',obrigatorio:true,ordem:3},
+        {id:'cpf',nome:'CPF',hint:'Cartão ou app da Receita Federal',obrigatorio:true,ordem:3},
         {id:'compresid',nome:'Comprovante de residência',hint:'Conta de água, luz ou telefone recente',obrigatorio:true,ordem:4},
-        {id:'pis',nome:'PIS/PASEP',hint:'Carteira de trabalho, app CTPS Digital ou extrato FGTS',obrigatorio:true,ordem:5},
+        {id:'pis',nome:'PIS/PASEP',hint:'CTPS Digital ou extrato FGTS',obrigatorio:true,ordem:5},
         {id:'ctps',nome:'Carteira de Trabalho (CTPS)',hint:'Página com foto e dados pessoais',obrigatorio:true,ordem:6},
         {id:'cnh',nome:'CNH',hint:'Se o cargo exigir ou se possuir',obrigatorio:false,ordem:7},
         {id:'reservista',nome:'Certificado de reservista',hint:'Obrigatório para homens',obrigatorio:false,ordem:8},
@@ -154,35 +278,43 @@ async function init(){
         {id:'vacina',nome:'Carteira de vacinação dos filhos',hint:'Filhos até 7 anos',obrigatorio:false,ordem:11},
       ];
     }
-    renderDocs();
+    renderSlots();
   }catch(e){showErr();}
 }
 
-function renderDocs(){
+function preencherCampos(){
+  const c=candData;
+  const set=(id,val)=>{const el=document.getElementById(id);if(!el||!val)return;el.value=val;el.classList.add('ja-tem');const fg=el.closest('.fg');if(fg){let hint=fg.querySelector('.preenchido');if(!hint){hint=document.createElement('span');hint.className='preenchido';fg.appendChild(hint);}hint.textContent='🟢 Já preenchido na candidatura';}};
+  set('d-rg',c.rg);set('d-rgorg',c.rgorg);set('d-pis',c.pis);set('d-mae',c.mae);set('d-pai',c.pai);
+  set('d-natmun',c.natmun);if(c.natpais)set('d-natpais',c.natpais);
+  if(c.pcd){document.getElementById('d-pcd').value=c.pcd;tPCD();if(c.pcdtipo)document.getElementById('d-pcdt').value=c.pcdtipo;}
+  set('d-cep',c.cep);set('d-logr',c.logr);set('d-num',c.num);set('d-comp',c.comp);set('d-bairro',c.bairro);set('d-cidade',c.cidade);
+  set('d-banco',c.banco);set('d-agencia',c.agencia);set('d-conta',c.conta);set('d-pix',c.pix);
+  if(c.camisa)set('d-camisa',c.camisa);set('d-calca',c.calca);set('d-calcado',c.calcado);
+  if(c.oculos)set('d-oculos',c.oculos);
+}
+
+function renderSlots(){
   const obr=docsConfig.filter(d=>d.obrigatorio);
   const opt=docsConfig.filter(d=>!d.obrigatorio);
-  const obrEl=document.getElementById('docs-obr');
-  const optEl=document.getElementById('docs-opt');
-  const optWrap=document.getElementById('docs-opt-wrap');
-  if(obr.length){
-    obrEl.innerHTML='<div class="sec-lbl">Documentos obrigatórios</div>'+obr.map(d=>slotHtml(d)).join('');
-  }
+  document.getElementById('slots-obr').innerHTML=
+    '<div class="sec-lbl">Documentos obrigatórios</div>'+obr.map(d=>slotHtml(d)).join('');
   if(opt.length){
-    optWrap.style.display='block';
-    optEl.innerHTML=opt.map(d=>slotHtml(d)).join('');
+    document.getElementById('slots-opt-wrap').style.display='block';
+    document.getElementById('slots-opt').innerHTML=opt.map(d=>slotHtml(d)).join('');
   }
   atualizarProg();
 }
 
 function slotHtml(d){
-  const uploaded=uploadedFiles[d.id];
-  const cls=uploaded?'ok':'';
-  const badge=uploaded?'<span class="slot-badge badge-ok">✓ Enviado</span>':d.obrigatorio?'<span class="slot-badge badge-obr">Obrigatório</span>':'<span class="slot-badge badge-opt">Opcional</span>';
-  const hint=uploaded?'✓ '+uploadedFiles[d.id].name:d.hint||'Toque para enviar';
+  const up=uploadedFiles[d.id];
+  const cls=up?'ok':'';
+  const badge=up?'<span class="badge b-ok">✓ Enviado</span>':d.obrigatorio?'<span class="badge b-obr">Obrigatório</span>':'<span class="badge b-opt">Opcional</span>';
+  const hint=up?'✓ '+up.name:d.hint||'Toque para enviar';
   return`<div class="slot ${cls}" id="slot-${d.id}">
-    <input type="file" accept="image/*,.pdf" capture="environment" onchange="handleFile(this,'${d.id}','${d.nome}')">
+    <input type="file" accept="image/*,.pdf" capture="environment" onchange="handleFile(this,'${d.id}','${d.nome.replace(/'/g,"\\'")}')">
     <div class="slot-top">
-      <div class="slot-icon">${uploaded?'✅':'📎'}</div>
+      <div class="slot-icon">${up?'✅':'📎'}</div>
       <div class="slot-info"><div class="slot-name">${d.nome}</div><div class="slot-hint" id="hint-${d.id}">${hint}</div></div>
       ${badge}
     </div>
@@ -192,15 +324,15 @@ function slotHtml(d){
 function atualizarProg(){
   const total=docsConfig.length;
   const enviados=Object.keys(uploadedFiles).length;
-  const obrFaltando=docsConfig.filter(d=>d.obrigatorio&&!uploadedFiles[d.id]).length;
-  document.getElementById('prog-num').textContent=enviados;
-  document.getElementById('prog-lbl').textContent=`de ${total} documento${total!==1?'s':''} enviado${enviados!==1?'s':''}`;
-  document.getElementById('obr-num').textContent=obrFaltando;
-  document.getElementById('prog-bar').style.width=total>0?(enviados/total*100)+'%':'0%';
-  if(obrFaltando>0){
-    document.getElementById('falta-msg').textContent=`${obrFaltando} documento${obrFaltando!==1?'s obrigatórios faltam':' obrigatório falta'} para enviar.`;
+  const obrFalta=docsConfig.filter(d=>d.obrigatorio&&!uploadedFiles[d.id]).length;
+  document.getElementById('prog-n').textContent=enviados;
+  document.getElementById('prog-l').textContent=`de ${total} documento${total!==1?'s':''} enviado${enviados!==1?'s':''}`;
+  document.getElementById('falta-n').textContent=obrFalta;
+  document.getElementById('pbar').style.width=total>0?(enviados/total*100)+'%':'0%';
+  if(obrFalta>0){
+    document.getElementById('falta-msg').textContent=`${obrFalta} documento${obrFalta!==1?'s obrigatórios faltam':' obrigatório falta'}.`;
     document.getElementById('falta-msg').style.color='var(--rtxt)';
-  } else {
+  }else{
     document.getElementById('falta-msg').textContent='✓ Todos os documentos obrigatórios foram enviados!';
     document.getElementById('falta-msg').style.color='var(--gtxt)';
   }
@@ -211,48 +343,103 @@ window.handleFile=function(input,docId,docNome){
   if(file.size>10*1024*1024){alert('Arquivo muito grande. Máximo: 10MB.');return;}
   const slot=document.getElementById('slot-'+docId);
   const hint=document.getElementById('hint-'+docId);
-  if(slot) slot.classList.add('ok');
-  if(hint) hint.textContent='Carregando...';
+  if(hint)hint.textContent='Carregando...';
   const reader=new FileReader();
   reader.onload=function(e){
     uploadedFiles[docId]={name:file.name,base64:e.target.result.split(',')[1],mimeType:file.type,label:docNome};
-    renderDocs(); // Re-renderiza com estado atualizado
-    atualizarProg();
+    renderSlots();
   };
   reader.readAsDataURL(file);
 };
 
+window.irTab=function(n,btn){
+  document.querySelectorAll('.tab-btn').forEach(b=>b.classList.remove('active'));
+  document.querySelectorAll('.tab-pane').forEach(p=>p.classList.remove('active'));
+  if(btn)btn.classList.add('active');
+  document.getElementById('tab'+n).classList.add('active');
+  window.scrollTo({top:0,behavior:'smooth'});
+};
+
 window.enviar=async function(){
-  const obrFaltando=docsConfig.filter(d=>d.obrigatorio&&!uploadedFiles[d.id]);
-  if(obrFaltando.length>0){
-    // Destacar os que faltam
-    obrFaltando.forEach(d=>{const s=document.getElementById('slot-'+d.id);if(s)s.classList.add('err');});
-    alert(`Envie os documentos obrigatórios antes de continuar:\n\n${obrFaltando.map(d=>'• '+d.nome).join('\n')}`);
-    setTimeout(()=>document.querySelector('.slot.err')?.scrollIntoView({behavior:'smooth',block:'center'}),100);
+  // Validar docs obrigatórios
+  const obrFalta=docsConfig.filter(d=>d.obrigatorio&&!uploadedFiles[d.id]);
+  if(obrFalta.length>0){
+    obrFalta.forEach(d=>{const s=document.getElementById('slot-'+d.id);if(s){s.classList.add('falta');}});
+    alert(`Envie os documentos obrigatórios antes de continuar:\n\n${obrFalta.map(d=>'• '+d.nome).join('\n')}`);
+    setTimeout(()=>document.querySelector('.slot.falta')?.scrollIntoView({behavior:'smooth',block:'center'}),100);
     return;
   }
+
   const ov=document.getElementById('ov');
   ov.classList.add('show');
-  document.getElementById('ov-txt').textContent='Salvando documentos...';
+  document.getElementById('ov-txt').textContent='Salvando seus dados...';
+
+  const g=id=>{const el=document.getElementById(id);return el?el.value.trim():''};
+
+  // Montar objeto com APENAS os campos não vazios (para não sobrescrever dados existentes)
+  const updates={};
+  const campos=[
+    ['rg','d-rg'],['rgorg','d-rgorg'],['pis','d-pis'],['mae','d-mae'],['pai','d-pai'],
+    ['natmun','d-natmun'],['natpais','d-natpais'],['pcd','d-pcd'],['pcdtipo','d-pcdt'],
+    ['cep','d-cep'],['logr','d-logr'],['num','d-num'],['comp','d-comp'],['bairro','d-bairro'],['cidade','d-cidade'],
+    ['banco','d-banco'],['agencia','d-agencia'],['conta','d-conta'],['pix','d-pix'],
+    ['camisa','d-camisa'],['calca','d-calca'],['calcado','d-calcado'],['oculos','d-oculos'],
+  ];
+  campos.forEach(([campo,elId])=>{
+    const val=g(elId);
+    // Só atualiza se o candidato preencheu algo novo (não estava já no cadastro)
+    if(val && val !== (candData[campo]||'')) updates[campo]=val;
+    // Ou se estava vazio e agora tem valor
+    else if(val && !candData[campo]) updates[campo]=val;
+  });
+
+  // Status dos documentos
+  const docsRecebidos=Object.keys(uploadedFiles);
+  const docsStatus={...(candData.docsStatus||{})};
+  docsConfig.forEach(d=>{
+    if(uploadedFiles[d.id]){
+      docsStatus[d.id]={recebido:true,nome:uploadedFiles[d.id].name,obrigatorio:d.obrigatorio,enviadoEm:new Date().toISOString()};
+    }
+  });
+
+  updates.docsRecebidos=[...new Set([...(candData.docsRecebidos||[]),...docsRecebidos])];
+  updates.docsStatus=docsStatus;
+  updates.docsEnviadoEm=new Date().toISOString();
+  updates.cadastroCompleto=true;
+  updates.atualizadoEm=new Date().toISOString();
+
   try{
-    const docsRecebidos=Object.keys(uploadedFiles);
-    const docsStatus={};
-    docsConfig.forEach(d=>{docsStatus[d.id]={recebido:!!uploadedFiles[d.id],nome:uploadedFiles[d.id]?.name||'',obrigatorio:d.obrigatorio};});
-    await updateDoc(doc(db,'candidatos',candId),{
-      docsRecebidos,docsStatus,
-      docsEnviadoEm:new Date().toISOString(),
-      status:'processo',
-      atualizadoEm:new Date().toISOString()
-    });
+    await updateDoc(doc(db,'candidatos',candId),updates);
     ov.classList.remove('show');
-    document.getElementById('main-content').style.display='none';
+    document.getElementById('main').style.display='none';
     document.getElementById('suc').style.display='block';
     window.scrollTo({top:0,behavior:'smooth'});
-  }catch(e){ov.classList.remove('show');alert('Erro ao salvar: '+e.message);}
+  }catch(e){
+    ov.classList.remove('show');
+    alert('Erro ao salvar: '+e.message+'\n\nTente novamente.');
+  }
+};
+
+// MASKS
+window.mPIS=function(el){let v=el.value.replace(/\D/g,'').slice(0,11);if(v.length>9)v=v.replace(/(\d{3})(\d{5})(\d{2})(\d)/,'$1.$2.$3-$4');else if(v.length>7)v=v.replace(/(\d{3})(\d{5})(\d)/,'$1.$2.$3');else if(v.length>3)v=v.replace(/(\d{3})(\d)/,'$1.$2');el.value=v;};
+window.mCEP=function(el){let v=el.value.replace(/\D/g,'').slice(0,8);if(v.length>5)v=v.replace(/(\d{5})(\d)/,'$1-$2');el.value=v;};
+window.tPCD=function(){document.getElementById('d-pcdtw').style.display=document.getElementById('d-pcd').value==='sim'?'flex':'none';};
+window.bCEP=async function(){
+  const cep=document.getElementById('d-cep').value.replace(/\D/g,'');
+  const h=document.getElementById('cep-h');
+  if(cep.length!==8){h.textContent='CEP inválido';return;}h.textContent='Buscando...';
+  try{
+    const r=await fetch(`https://viacep.com.br/ws/${cep}/json/`);const d=await r.json();
+    if(d.erro){h.textContent='CEP não encontrado';return;}
+    document.getElementById('d-logr').value=d.logradouro||'';
+    document.getElementById('d-bairro').value=d.bairro||'';
+    document.getElementById('d-cidade').value=(d.localidade||'')+(d.uf?' / '+d.uf:'');
+    h.textContent='✓ Preenchido';h.style.color='var(--gtxt)';
+  }catch(e){h.textContent='Erro ao buscar CEP';}
 };
 
 function showErr(){
-  document.getElementById('main-content').style.display='none';
+  document.getElementById('main').style.display='none';
   document.getElementById('err-screen').style.display='block';
 }
 
