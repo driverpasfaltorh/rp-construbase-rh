@@ -514,6 +514,11 @@ window.login=async function(){
     }
     sessionStorage.setItem('fb_token',data.idToken);sessionStorage.setItem('fb_email',data.email);sessionStorage.setItem('fb_uid',data.localId);
     CU={email:data.email,uid:data.localId,token:data.idToken};
+    // Autenticar o SDK do Firebase com as credenciais recebidas
+    try{
+      const {signInWithEmailAndPassword} = await import("https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js");
+      await signInWithEmailAndPassword(authSDK, email, senha);
+    }catch(sdkErr){console.log('SDK auth fallback:',sdkErr.message);}
     await iniciarApp();
   }catch(e){err.textContent='Erro de conexão.';err.style.display='block';btn.disabled=false;btn.textContent='Entrar';}
 };
