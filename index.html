@@ -478,8 +478,16 @@ function popularSelects(){
 }
 
 function iniciarListeners(){
-  onSnapshot(query(collection(db,'candidatos'),orderBy('criadoEm','desc')),snap=>{candidatos=snap.docs.map(d=>({id:d.id,...d.data()}));renderPainel();renderCands();});
-  onSnapshot(query(collection(db,'admissoes'),orderBy('criadoEm','desc')),snap=>{admissoes=snap.docs.map(d=>({id:d.id,...d.data()}));renderPainel();renderAdms();});
+  onSnapshot(query(collection(db,'candidatos'),orderBy('criadoEm','desc')),snap=>{
+    candidatos=snap.docs.map(d=>({id:d.id,...d.data()}));
+    renderPainel();
+    if(document.getElementById('page-candidatos')?.classList.contains('active')) renderCands();
+  });
+  onSnapshot(query(collection(db,'admissoes'),orderBy('criadoEm','desc')),snap=>{
+    admissoes=snap.docs.map(d=>({id:d.id,...d.data()}));
+    renderPainel();
+    if(document.getElementById('page-admissoes')?.classList.contains('active')) renderAdms();
+  });
 }
 
 window.go=function(page){
@@ -632,6 +640,7 @@ function renderPainel(){
 
 // CANDIDATOS
 function renderCands(){
+  if(!document.getElementById('page-candidatos')?.classList.contains('active'))return;
   const busca=(document.getElementById('fb-busca')?.value||'').toLowerCase();
   const cargo=document.getElementById('fb-cargo')?.value||'';
   const status=document.getElementById('fb-status')?.value||'';
