@@ -1435,80 +1435,17 @@ window.gerarTextoVaga = function(){
   const tipoLabel=tipo||'CLT';
   let texto='';
   if(plat==='indeed'){
-    texto=`${cargo}
-${empresa} — ${tipoLabel}
-
-SOBRE A VAGA
-Estamos com ${qtd} vaga${qtd>1?'s':''} aberta${qtd>1?'s':''} para ${cargo} para atuar em obras de pavimentação e terraplenagem.
-
-REQUISITOS
-${requisitos||'• Experiência na função
-• Disponibilidade para trabalho em campo
-• Comprometimento e responsabilidade'}
-
-BENEFÍCIOS
-${beneficios||'• Vale transporte
-• Alimentação
-• Seguro de vida em grupo'}
-
-REMUNERAÇÃO
-${salario} — ${tipoLabel}
-
-COMO SE CANDIDATAR
-Acesse o link abaixo e preencha o formulário de candidatura:
-${linkVaga}`;
+    texto=cargo+'\n'+empresa+' — '+tipoLabel+'\n\nSOBRE A VAGA\nEstamos com '+qtd+' vaga'+(qtd>1?'s':'')+' aberta'+(qtd>1?'s':'')+' para '+cargo+' para atuar em obras de pavimentação e terraplenagem.\n\nREQUISITOS\n'+(requisitos||'• Experiência na função\n• Disponibilidade para trabalho em campo\n• Comprometimento e responsabilidade')+'\n\nBENEFÍCIOS\n'+(beneficios||'• Vale transporte\n• Alimentação\n• Seguro de vida em grupo')+'\n\nREMUNERAÇÃO\n'+salario+' — '+tipoLabel+'\n\nCOMO SE CANDIDATAR\nAcesse o link abaixo e preencha o formulário de candidatura:\n'+linkVaga;
   } else if(plat==='instagram'){
-    texto=`🚨 VAGA ABERTA — ${cargo.toUpperCase()}
-
-📍 ${empresa}
-💼 ${tipoLabel} | 💰 ${salario}
-
-✅ Requisitos:
-${requisitos?requisitos.split('
-').slice(0,3).map(r=>'• '+r.replace(/^•\s*/,'')).join('
-'):'• Experiência na função
-• Disponibilidade para campo
-• Comprometimento'}
-
-🎯 Interessado? Candidate-se pelo link na bio ou acesse:
-${linkVaga}
-
-📲 Compartilhe com quem precisa!
-#vaga #emprego #construção #pavimentação #${cargo.toLowerCase().replace(/\s+/g,'')}`;
-  } else if(plat==='whatsapp'){
-    texto=`*VAGA — ${cargo.toUpperCase()}*
-🏢 ${empresa}
-📋 ${tipoLabel} | 💰 ${salario}
-
-*Requisitos:*
-${requisitos?requisitos.split('
-').slice(0,3).map(r=>'• '+r.replace(/^•\s*/,'')).join('
-'):'• Experiência na função
-• Disponibilidade para campo'}
-
-*Para se candidatar, acesse:*
-${linkVaga}
-
-_Compartilhe com quem tiver interesse!_ 👇`;
-  } else if(plat==='linkedin'){
-    texto=`Estamos contratando: ${cargo}
-
-A ${empresa} está com vaga aberta para ${cargo} para integrar nossa equipe de obras de pavimentação e infraestrutura.
-
-O que buscamos:
-${requisitos||'• Experiência comprovada na função
-• Comprometimento e atenção à segurança
-• Disponibilidade para trabalho em campo'}
-
-O que oferecemos:
-${beneficios||'• Vale transporte e alimentação
-• Seguro de vida em grupo
-• Remuneração compatível com o mercado'}
-• Remuneração: ${salario}
-• Contrato: ${tipoLabel}
-
-Interessados, acesse o link para se candidatar:
-${linkVaga}`;
+    const reqs=requisitos?requisitos.split('\n').slice(0,3).map(r=>'• '+r.replace(/^•\s*/,'')).join('\n'):'• Experiência na função\n• Disponibilidade para campo\n• Comprometimento';
+    texto='🚨 VAGA ABERTA — '+cargo.toUpperCase()+'\n\n📍 '+empresa+'\n💼 '+tipoLabel+' | 💰 '+salario+'\n\n✅ Requisitos:\n'+reqs+'\n\n🎯 Interessado? Candidate-se pelo link na bio ou acesse:\n'+linkVaga+'\n\n📲 Compartilhe com quem precisa!\n#vaga #emprego #construção #pavimentação #'+cargo.toLowerCase().replace(/\s+/g,'');
+    } else if(plat==='whatsapp'){
+    const reqs2=requisitos?requisitos.split('\n').slice(0,3).map(r=>'• '+r.replace(/^•\s*/,'')).join('\n'):'• Experiência na função\n• Disponibilidade para campo';
+    texto='*VAGA — '+cargo.toUpperCase()+'*\n🏢 '+empresa+'\n📋 '+tipoLabel+' | 💰 '+salario+'\n\n*Requisitos:*\n'+reqs2+'\n\n*Para se candidatar, acesse:*\n'+linkVaga+'\n\n_Compartilhe com quem tiver interesse!_ 👇';
+    } else if(plat==='linkedin'){
+    const reqsLi=requisitos||'• Experiência comprovada na função\n• Comprometimento e atenção à segurança\n• Disponibilidade para trabalho em campo';
+    const benefLi=beneficios||'• Vale transporte e alimentação\n• Seguro de vida em grupo\n• Remuneração compatível com o mercado';
+    texto='Estamos contratando: '+cargo+'\n\nA '+empresa+' está com vaga aberta para '+cargo+' para integrar nossa equipe de obras de pavimentação e infraestrutura.\n\nO que buscamos:\n'+reqsLi+'\n\nO que oferecemos:\n'+benefLi+'\n• Remuneração: '+salario+'\n• Contrato: '+tipoLabel+'\n\nInteressados, acesse o link para se candidatar:\n'+linkVaga;
   }
   document.getElementById('mv-texto-gerado').textContent=texto;
 };
