@@ -193,7 +193,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
         <div class="fg"><label>Status</label><select id="fb-status" onchange="renderCands()"><option value="">Todos</option><option value="disponivel">Disponível</option><option value="processo">Em processo</option><option value="contratado">Contratado</option><option value="descartado">Descartado</option></select></div>
         <div class="fg"><label>Origem</label><select id="fb-origem" onchange="renderCands()"><option value="">Todas</option></select></div>
         <div class="fg"><label>Competência</label><input type="text" id="fb-comp" placeholder="Ex: Fresa, SINAPI..." onkeydown="if(event.key==='Enter')renderCands()" style="min-width:140px"></div>
-        <div class="fg" style="justify-content:flex-end"><label>&nbsp;</label><button class="btn btn-p" onclick="renderCands()" style="white-space:nowrap;height:38px">Buscar</button></div>
+        <div class="fg" style="justify-content:flex-end"><label>&nbsp;</label><div style="display:flex;gap:6px"><button class="btn btn-p" onclick="renderCands()" style="white-space:nowrap;height:38px">Buscar</button><button class="btn" onclick="limparFiltros()" style="white-space:nowrap;height:38px">Limpar</button></div></div>
       </div>
       <div class="res-count" id="cand-count"></div>
       <div id="cand-lista"></div>
@@ -959,6 +959,11 @@ window.criarUsuario=async function(){
 };
 
 // UTILS
+window.limparFiltros=function(){
+  ['fb-busca','fb-comp'].forEach(id=>{const el=document.getElementById(id);if(el)el.value='';});
+  ['fb-cargo','fb-status','fb-origem'].forEach(id=>{const el=document.getElementById(id);if(el)el.selectedIndex=0;});
+  renderCands();
+};
 window.openModal=function(id){document.getElementById(id).classList.add('open');};
 window.closeModal=function(id){document.getElementById(id).classList.remove('open');};
 window.toast=function(msg,tipo=''){const t=document.getElementById('toast');t.textContent=msg;t.className='toast show'+(tipo?' '+tipo:'');setTimeout(()=>t.className='toast',3000);};
