@@ -653,7 +653,7 @@ function renderCands(){
       <div style="display:flex;flex-direction:column;align-items:flex-end;gap:4px">
         <span class="badge b-${c.status}">${SL[c.status]||c.status}</span>
         <span class="badge ${OBC[c.origem]||''}">${ol}</span>
-        ${docsPendentes>0?`<span style="font-size:10px;color:var(--rtxt)">📄 ${docsPendentes} doc${docsPendentes>1?'s':''} pendente${docsPendentes>1?'s':''}` :''}
+        ${docsPendentes>0?`<span style="font-size:10px;color:var(--rtxt)">📄 ${docsPendentes} doc${docsPendentes>1?'s':''} pendente${docsPendentes>1?'s':''}</span>` :''}
       </div></div>
       <div class="card-tags">${(c.competencias||[]).slice(0,5).map(t=>`<span class="ctag">${t}</span>`).join('')}</div>
       <div class="card-meta"><span>${c.criadoEm?new Date(c.criadoEm).toLocaleDateString('pt-BR'):''}</span>${c.exp?`<span>Exp: ${c.exp}</span>`:''}${(c.experiencias||[]).length?`<span>${c.experiencias.length} empresa${c.experiencias.length>1?'s':''}</span>`:''}</div>
