@@ -167,21 +167,14 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
 
     <div class="card">
       <div class="card-ttl"><div class="card-dot"></div>Currículo <span style="font-size:13px;font-weight:400;color:var(--txt3)">(opcional)</span></div>
-      <p style="font-size:13px;color:var(--txt2);margin-bottom:.75rem">Faça upload do seu currículo — os dados serão preenchidos automaticamente!</p>
-      <div class="upload-box" id="box-cv">
-        <input type="file" accept=".pdf,.doc,.docx" onchange="handleFile(this,'cv','Currículo')">
-        <div class="upload-box-name">📄 Currículo</div>
-        <div class="upload-box-st" id="st-cv">PDF ou Word — toque para selecionar</div>
+      <p style="font-size:13px;color:var(--txt2);margin-bottom:.75rem">Se tiver currículo, cole o texto abaixo — os dados serão preenchidos automaticamente!</p>
+      <div class="fg">
+        <label>Texto do currículo <span class="opt">(opcional)</span></label>
+        <textarea id="cv-texto" rows="5" placeholder="Abra seu currículo, selecione todo o texto (Ctrl+A), copie (Ctrl+C) e cole aqui..." style="font-size:14px;resize:vertical"></textarea>
+        <span class="hint">Cole o texto do seu currículo e clique em "Preencher automaticamente"</span>
       </div>
-      <div id="cv-extrair-wrap" style="display:none;margin-top:.75rem">
-        <button type="button" class="btn btn-p" onclick="extrairCurriculo()" id="btn-extrair" style="width:100%">✨ Preencher formulário com dados do currículo</button>
-        <p style="font-size:12px;color:var(--txt3);text-align:center;margin-top:.5rem">Revise e corrija os dados extraídos antes de enviar.</p>
-      </div>
-      <div id="cv-extraindo" style="display:none;text-align:center;padding:1rem">
-        <div style="font-size:24px;margin-bottom:.5rem">⏳</div>
-        <div style="font-size:13px;color:var(--txt2)">Lendo o currículo com IA...</div>
-        <div style="font-size:12px;color:var(--txt3);margin-top:.25rem">Isso leva alguns segundos</div>
-      </div>
+      <button type="button" class="btn btn-p" onclick="extrairCvPublico()" id="btn-extrair" style="width:100%">✨ Preencher automaticamente com IA</button>
+      <div id="cv-status" style="display:none;margin-top:.75rem;font-size:13px;text-align:center;padding:8px 12px;border-radius:var(--r)"></div>
     </div>
 
     <div class="btn-row">
@@ -362,144 +355,49 @@ window.enviar=async function(){
   }catch(e){ov.classList.remove('show');alert('Erro ao enviar: '+e.message);}
 };
 
-window.extrairCurriculo = async function(){
-  if(!cvFile){return;}
-  const wrap=document.getElementById('cv-extrair-wrap');
-  const extraindo=document.getElementById('cv-extraindo');
+window.extrairCvPublico = async function(){
+  const texto = document.getElementById('cv-texto')?.value.trim();
+  if(!texto || texto.length < 30){
+    const st=document.getElementById('cv-status');
+    st.style.display='block';st.style.background='var(--abg)';st.style.color='var(--atxt)';
+    st.textContent='Cole o texto do currículo antes de extrair.';return;
+  }
   const btn=document.getElementById('btn-extrair');
-  wrap.style.display='none';
-  extraindo.style.display='block';
-  try {
-    // Montar prompt para Claude
-    const prompt=`Analise este currículo e extraia as informações no formato JSON abaixo. Se uma informação não existir, deixe como string vazia "". Retorne APENAS o JSON, sem texto adicional.
+  const st=document.getElementById('cv-status');
+  btn.disabled=true;btn.textContent='⏳ Analisando...';
+  st.style.display='block';st.style.background='var(--abg)';st.style.color='var(--atxt)';
+  st.textContent='Lendo seu currículo com IA...';
+  const prompt=`Analise este currículo e extraia as informações no formato JSON abaixo. Se uma informação não existir, deixe como string vazia "". Retorne APENAS o JSON válido, sem texto adicional.
 
-{
-  "nome": "nome completo",
-  "tel": "telefone com DDD",
-  "email": "email",
-  "cidade": "cidade / UF",
-  "cargo": "cargo ou área de atuação principal",
-  "inst": "grau de instrução (ex: Superior completo, Médio completo)",
-  "exp": "tempo de experiência (ex: 5 a 10 anos, Mais de 10 anos)",
-  "sal": "pretensão salarial se mencionada",
-  "cnh": "categoria da CNH se mencionada",
-  "trajetoria": "resumo profissional em 2-3 linhas",
-  "experiencias": [
-    {"empresa": "", "cargo": "", "de": "mm/aaaa", "ate": "mm/aaaa ou atual", "vinculo": "CLT ou PJ", "motivo": "", "desc": "atividades principais"}
-  ],
-  "formacoes": [
-    {"nome": "nome do curso", "inst": "instituição", "ano": "ano de conclusão"}
-  ]
-}`;
+{"nome":"","tel":"","email":"","cidade":"cidade/UF","logr":"logradouro","nasc":"YYYY-MM-DD","ecivil":"","cargo":"cargo principal","inst":"grau de instrução","exp":"tempo de experiência ex: 2 a 5 anos","sal":"","cnh":"categoria ex: C","trajetoria":"resumo 2-3 linhas","experiencias":[{"empresa":"","cargo":"","de":"mm/aaaa","ate":"mm/aaaa ou atual","vinculo":"CLT ou PJ","motivo":"","desc":""}],"formacoes":[{"nome":"","inst":"","ano":""}]}
 
-    const mimeType = cvFile.mimeType || 'application/pdf';
-    let messages;
-    
-    if(mimeType === 'application/pdf'){
-      messages = [{
-        role: 'user',
-        content: [
-          {type: 'document', source: {type: 'base64', media_type: 'application/pdf', data: cvFile.base64}},
-          {type: 'text', text: prompt}
-        ]
-      }];
-    } else {
-      // Word ou outro — enviar como texto base64
-      messages = [{
-        role: 'user',
-        content: prompt + '\n\n[Arquivo: ' + cvFile.name + ' — não foi possível ler o conteúdo diretamente. Baseie-se no nome do arquivo e retorne JSON com campos vazios para o usuário preencher manualmente.]'
-      }];
-    }
-
-    const res = await fetch('https://api.anthropic.com/v1/messages', {
-      method: 'POST',
-      headers: {'Content-Type': 'application/json'},
-      body: JSON.stringify({
-        model: 'claude-sonnet-4-20250514',
-        max_tokens: 1000,
-        messages
-      })
-    });
-    const data = await res.json();
-    const texto = data.content?.[0]?.text || '';
-    
-    // Extrair JSON da resposta
-    const jsonMatch = texto.match(/\{[\s\S]*\}/);
-    if(!jsonMatch) throw new Error('Não foi possível extrair dados do currículo.');
-    
-    const dados = JSON.parse(jsonMatch[0]);
-    
-    // Preencher formulário
-    const s=(id,val)=>{const el=document.getElementById(id);if(el&&val)el.value=val;};
-    // Etapa 1
-    s('f-nome', dados.nome);
-    s('f-tel', dados.tel);
-    s('f-email', dados.email);
-    s('f-cidade', dados.cidade);
-    
-    // Etapa 2
-    if(dados.cargo){
-      // Tentar selecionar cargo existente
-      const sel=document.getElementById('f-cargo');
-      if(sel){
-        const opts=Array.from(sel.options);
-        const match=opts.find(o=>o.value.toLowerCase().includes(dados.cargo.toLowerCase().split(' ')[0]));
-        if(match) sel.value=match.value;
-      }
-    }
-    if(dados.inst){
-      const sel=document.getElementById('f-inst');
-      if(sel){
-        const opts=Array.from(sel.options);
-        const match=opts.find(o=>o.text.toLowerCase().includes(dados.inst.toLowerCase().split(' ')[0]));
-        if(match) sel.value=match.value;
-      }
-    }
-    if(dados.exp){
-      const sel=document.getElementById('f-exp');
-      if(sel){
-        const opts=Array.from(sel.options);
-        const match=opts.find(o=>o.text.toLowerCase().includes(dados.exp.toLowerCase().replace('anos','').trim().split(' ')[0]));
-        if(match) sel.value=match.value;
-      }
-    }
-    s('f-sal', dados.sal);
-    if(dados.cnh){
-      const sel=document.getElementById('f-cnh');
-      if(sel){const opts=Array.from(sel.options);const match=opts.find(o=>o.value===dados.cnh.toUpperCase());if(match)sel.value=match.value;}
-    }
-    s('f-traj', dados.trajetoria);
-    
-    // Experiências
-    if(dados.experiencias?.length){
-      exps=dados.experiencias.map((e,i)=>({id:'e'+Date.now()+i,...e,emp:e.empresa,de:e.de,ate:e.ate}));
-      renderExps();
-    }
-    // Formações
-    if(dados.formacoes?.length){
-      forms=dados.formacoes.map((f,i)=>({id:'f'+Date.now()+i,...f}));
-      renderForms();
-    }
-    
-    extraindo.style.display='none';
-    wrap.style.display='none';
-    
-    // Feedback de sucesso
-    const feedback=document.createElement('div');
-    feedback.style.cssText='background:var(--gbg);color:var(--gtxt);border:0.5px solid var(--green);border-radius:var(--r);padding:10px 12px;font-size:13px;margin-top:.75rem;text-align:center';
-    feedback.innerHTML='✅ Dados extraídos! Revise as informações abaixo e complete o que faltar.';
-    document.getElementById('box-cv').parentElement.appendChild(feedback);
-    
-    // Ir para etapa 2 automaticamente
-    setTimeout(()=>irE(2), 1500);
-    
-  } catch(e){
-    extraindo.style.display='none';
-    wrap.style.display='block';
-    const btn=document.getElementById('btn-extrair');
-    if(btn){btn.textContent='⚠️ Tentar novamente';btn.style.background='var(--amber)';}
-    console.error('Erro extração:', e);
-    alert('Não foi possível ler o currículo automaticamente. Preencha os dados manualmente.');
+CURRÍCULO:
+${texto}`;
+  try{
+    const res=await fetch('https://api.anthropic.com/v1/messages',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({model:'claude-sonnet-4-20250514',max_tokens:1500,messages:[{role:'user',content:prompt}]})});
+    const data=await res.json();
+    const txt=data.content?.[0]?.text||'';
+    const m=txt.match(/\{[\s\S]*\}/);if(!m)throw new Error('JSON não encontrado');
+    const d=JSON.parse(m[0]);
+    const s=(id,val)=>{const el=document.getElementById(id);if(el&&val&&!el.value)el.value=val;};
+    s('f-nome',d.nome);s('f-tel',d.tel);s('f-email',d.email);s('f-cidade',d.cidade);
+    s('f-logr',d.logr);s('f-nasc',d.nasc);s('f-traj',d.trajetoria);s('f-sal',d.sal);
+    if(d.inst){const sel=document.getElementById('f-inst');if(sel&&!sel.value){const opt=Array.from(sel.options).find(o=>o.text.toLowerCase().includes(d.inst.toLowerCase().split(' ')[0]));if(opt)sel.value=opt.value;}}
+    if(d.exp){const sel=document.getElementById('f-exp');if(sel&&!sel.value){const opt=Array.from(sel.options).find(o=>o.text.toLowerCase().includes(d.exp.toLowerCase().split(' ')[0]));if(opt)sel.value=opt.value;}}
+    if(d.cargo){const sel=document.getElementById('f-cargo');if(sel&&!sel.value){const palavras=d.cargo.toLowerCase().split(' ');const opt=Array.from(sel.options).find(o=>palavras.some(p=>p.length>3&&o.value.toLowerCase().includes(p)));if(opt)sel.value=opt.value;}}
+    if(d.cnh){const sel=document.getElementById('f-cnh');if(sel&&!sel.value){const opt=Array.from(sel.options).find(o=>o.value===d.cnh.toUpperCase());if(opt)sel.value=opt.value;}}
+    if(d.experiencias?.length){exps=d.experiencias.filter(e=>e.empresa||e.cargo).map((e,i)=>({id:'ep'+Date.now()+i,emp:e.empresa,cargo:e.cargo,de:e.de,ate:e.ate,vinculo:e.vinculo,motivo:e.motivo}));renderExps();}
+    if(d.formacoes?.length){forms=d.formacoes.filter(f=>f.nome).map((f,i)=>({id:'fp'+Date.now()+i,nome:f.nome,inst:f.inst,ano:f.ano}));renderForms();}
+    st.style.background='var(--gbg)';st.style.color='var(--gtxt)';
+    st.textContent='✅ Dados preenchidos! Revise as informações e complete o que faltar.';
+    btn.disabled=false;btn.textContent='✨ Preencher automaticamente com IA';
+    document.getElementById('cv-texto').value='';
+    setTimeout(()=>irE(2),1500);
+  }catch(e){
+    st.style.background='var(--rbg)';st.style.color='var(--rtxt)';
+    st.textContent='⚠️ Erro ao extrair. Preencha os dados manualmente.';
+    btn.disabled=false;btn.textContent='✨ Tentar novamente';
+    console.error(e);
   }
 };
 
