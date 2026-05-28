@@ -145,6 +145,8 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
       <div class="nav-sec">Recrutamento</div>
       <div class="ni" onclick="go('candidatos')"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="8" cy="5" r="3"/><path d="M2 14c0-3.3 2.7-6 6-6s6 2.7 6 6"/></svg>Banco de candidatos</div>
       <div class="ni" onclick="go('novo-cand')"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="7" cy="5" r="3"/><path d="M1 14c0-3.3 2.7-6 6-6"/><line x1="12" y1="9" x2="12" y2="15"/><line x1="9" y1="12" x2="15" y2="12"/></svg>Novo candidato</div>
+      <div class="nav-sec">Vagas</div>
+      <div class="ni" onclick="go('vagas')"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="2" y="3" width="12" height="11" rx="1"/><path d="M5 3V2a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v1"/><line x1="5" y1="7" x2="11" y2="7"/><line x1="5" y1="10" x2="9" y2="10"/></svg>Vagas abertas</div>
       <div class="nav-sec">Seleção</div>
       <div class="ni" onclick="go('selecao')"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="8" cy="8" r="6"/><path d="M5 8l2 2 4-4"/></svg>Processos seletivos</div>
       <div class="nav-sec">Admissão</div>
@@ -261,6 +263,19 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
       </div>
     </div>
 
+    <!-- VAGAS -->
+    <div id="page-vagas" class="page">
+      <div class="flex-row" style="justify-content:space-between;margin-bottom:1rem">
+        <div class="page-title" style="margin:0">Vagas abertas</div>
+        <button class="btn btn-p" onclick="window.abrirNovaVaga()">+ Nova vaga</button>
+      </div>
+      <div class="filter-row">
+        <div class="fg"><label>Status</label><select id="fv-status" onchange="window.renderVagas()"><option value="">Todas</option><option value="aberta">Aberta</option><option value="selecao">Em seleção</option><option value="encerrada">Encerrada</option></select></div>
+        <div class="fg"><label>Empresa</label><select id="fv-empresa" onchange="window.renderVagas()"><option value="">Todas</option></select></div>
+      </div>
+      <div id="vagas-lista"></div>
+    </div>
+
     <!-- SELEÇÃO -->
     <div id="page-selecao" class="page">
       <div class="flex-row" style="justify-content:space-between;margin-bottom:1rem">
@@ -349,6 +364,76 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
   <div class="modal-hdr"><span class="modal-title" id="mcfg-title">Item</span><button class="modal-x" onclick="closeModal('modal-cfg')">×</button></div>
   <div id="mcfg-body"></div>
   <div class="btn-row"><button class="btn btn-p" onclick="salvarCfgItem()">Salvar</button><button class="btn" onclick="closeModal('modal-cfg')">Cancelar</button></div>
+</div></div>
+
+<!-- MODAL NOVA VAGA -->
+<div id="modal-vaga" class="modal-ov"><div class="modal" style="max-width:660px">
+  <div class="modal-hdr"><span class="modal-title" id="mv-title">Nova vaga</span><button class="modal-x" onclick="closeModal('modal-vaga')">×</button></div>
+  <div class="tab-bar" style="margin-bottom:1rem">
+    <button class="tab-btn active" onclick="vagaTab('dados',this)">Dados da vaga</button>
+    <button class="tab-btn" onclick="vagaTab('divulg',this)">Divulgação</button>
+    <button class="tab-btn" onclick="vagaTab('presel',this)">Pré-seleção</button>
+  </div>
+  <!-- ABA DADOS -->
+  <div id="vt-dados" class="tab-pane active">
+    <div class="g2">
+      <div class="fg"><label>Cargo *</label><select id="mv-cargo" onchange="window.onVagaCargoChange()"><option value="">Selecione...</option></select></div>
+      <div class="fg"><label>Empresa *</label><select id="mv-empresa"><option value="">—</option></select></div>
+    </div>
+    <div class="g3">
+      <div class="fg"><label>Quantidade de vagas *</label><input type="number" id="mv-qtd" value="1" min="1"></div>
+      <div class="fg"><label>Tipo de contrato</label><select id="mv-tipo"><option value="">—</option></select></div>
+      <div class="fg"><label>Status</label><select id="mv-status"><option value="aberta">Aberta</option><option value="selecao">Em seleção</option><option value="encerrada">Encerrada</option></select></div>
+    </div>
+    <div class="g2">
+      <div class="fg"><label>Salário (de)</label><input type="text" id="mv-sal-de" placeholder="R$ 0.000,00"></div>
+      <div class="fg"><label>Salário (até)</label><input type="text" id="mv-sal-ate" placeholder="R$ 0.000,00"></div>
+    </div>
+    <div class="g2">
+      <div class="fg"><label>Data de abertura</label><input type="date" id="mv-dt-aber"></div>
+      <div class="fg"><label>Prazo para candidatura</label><input type="date" id="mv-dt-prazo"></div>
+    </div>
+    <div class="fg" style="margin-bottom:10px"><label>Obra / Local de trabalho</label><select id="mv-obra"><option value="">—</option></select></div>
+    <div class="fg" style="margin-bottom:10px"><label>Requisitos principais</label><textarea id="mv-requisitos" rows="3" placeholder="Liste os principais requisitos para a vaga..."></textarea></div>
+    <div class="fg" style="margin-bottom:10px"><label>Benefícios</label><textarea id="mv-beneficios" rows="2" placeholder="Vale transporte, alimentação, seguro de vida..."></textarea></div>
+    <div class="fg"><label>Observações internas</label><textarea id="mv-obs" rows="2" placeholder="Anotações internas — não aparecem na divulgação"></textarea></div>
+  </div>
+  <!-- ABA DIVULGAÇÃO -->
+  <div id="vt-divulg" class="tab-pane">
+    <div class="info" style="margin-bottom:1rem">Textos gerados automaticamente com base nos dados da vaga. Copie e use em cada plataforma.</div>
+    <div class="fg" style="margin-bottom:.75rem"><label>Plataforma</label>
+      <select id="mv-plat" onchange="window.gerarTextoVaga()">
+        <option value="indeed">Indeed</option>
+        <option value="instagram">Instagram / Facebook</option>
+        <option value="whatsapp">WhatsApp</option>
+        <option value="linkedin">LinkedIn</option>
+      </select>
+    </div>
+    <div id="mv-texto-gerado" style="background:var(--bg);border:0.5px solid var(--brd2);border-radius:var(--r);padding:12px;font-size:13px;white-space:pre-wrap;min-height:200px;line-height:1.6;color:var(--txt)">Preencha os dados da vaga e clique em "Gerar texto".</div>
+    <div style="display:flex;gap:8px;margin-top:.75rem">
+      <button class="btn btn-sm btn-p" onclick="window.gerarTextoVaga()">🔄 Gerar texto</button>
+      <button class="btn btn-sm" onclick="window.copiarTextoVaga()">📋 Copiar texto</button>
+    </div>
+  </div>
+  <!-- ABA PRÉ-SELEÇÃO -->
+  <div id="vt-presel" class="tab-pane">
+    <div class="info" style="margin-bottom:1rem">Perguntas sugeridas para triagem dos candidatos. Edite conforme necessário.</div>
+    <div id="mv-perguntas-lista"></div>
+    <button class="btn btn-sm" onclick="window.addPergunta()" style="margin-bottom:.75rem">+ Adicionar pergunta</button>
+    <div style="margin-top:.5rem">
+      <button class="btn btn-sm" onclick="window.sugerirPerguntas()">✨ Sugerir perguntas pelo cargo</button>
+    </div>
+  </div>
+  <div class="btn-row">
+    <button class="btn btn-p" onclick="window.salvarVaga()">Salvar vaga</button>
+    <button class="btn" onclick="closeModal('modal-vaga')">Cancelar</button>
+  </div>
+</div></div>
+
+<!-- MODAL DETALHE VAGA -->
+<div id="modal-vaga-det" class="modal-ov"><div class="modal" style="max-width:700px">
+  <div class="modal-hdr"><div><div class="modal-title" id="mvd-titulo"></div><div style="font-size:12px;color:var(--txt3);margin-top:2px" id="mvd-sub"></div></div><button class="modal-x" onclick="closeModal('modal-vaga-det')">×</button></div>
+  <div id="mvd-body"></div>
 </div></div>
 
 <!-- MODAL EVENTO SELEÇÃO -->
@@ -444,7 +529,7 @@ async function iniciarApp(){
     else{cuProfile={email:CU.email,nome:'',perfil:'rh',criadoEm:new Date().toISOString()};await setDoc(doc(db,'usuarios',CU.uid),cuProfile);}
   }catch(e){cuProfile={perfil:'rh'};}
   if(cuProfile.perfil==='admin'){document.getElementById('sb-role').style.display='block';document.getElementById('ni-users').style.display='flex';}
-  await carregarCfg();iniciarListeners();go('painel');
+  await carregarCfg();iniciarListeners();iniciarListenerVagas();go('painel');
   document.getElementById('link-candidatura').href=BASE_URL+'/candidatura.html';
 }
 
@@ -538,13 +623,14 @@ function iniciarListeners(){
 window.go=function(page){
   document.querySelectorAll('.ni').forEach(i=>i.classList.remove('active'));
   document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
-  const map={painel:0,candidatos:1,'novo-cand':2,selecao:3,admissoes:4,config:5,usuarios:6};
+  const map={painel:0,candidatos:1,'novo-cand':2,vagas:3,selecao:4,admissoes:5,config:6,usuarios:7};
   const nis=document.querySelectorAll('.ni');
   if(map[page]!==undefined)nis[map[page]]?.classList.add('active');
   const el=document.getElementById('page-'+page);
   if(el)el.classList.add('active');
   if(page==='painel')renderPainel();
   if(page==='candidatos')renderCands();
+  if(page==='vagas')window.renderVagas();
   if(page==='selecao')window.renderSelecao();
   if(page==='admissoes'){document.getElementById('adm-lista-v').style.display='block';document.getElementById('adm-det-v').style.display='none';renderAdms();}
   if(page==='config'){document.querySelector('.tab-btn.active')?.click()||cfgTab('cargos',document.querySelector('.tab-btn'));}
@@ -787,7 +873,19 @@ window.abrirCand=function(id){
     ${(c.competencias||[]).length?dr('Tags',c.competencias.join(' · ')):''}${c.sal?dr('Pretensão',c.sal):''}
     ${expHtml}${formHtml}
     ${docsHtml}
-    ${c.obs?`<div class="det-sec">Observações RH</div>${dr('Anotações',c.obs)}`:''}
+    <!-- HISTÓRICO DE VAGAS -->
+    ${(()=>{
+      const vagasCand=vagas.filter(v=>(v.id)&&candidatos.find(x=>x.id===c.id&&(x.vagasIds||[]).includes(v.id)));
+      if(!vagasCand.length)return '';
+      return '<div class="det-sec">Histórico de vagas</div>'+vagasCand.map(v=>{
+        const stBadge={aberta:'b-conc',selecao:'b-and',encerrada:'b-desc'}[v.status]||'b-and';
+        return`<div style="display:flex;justify-content:space-between;align-items:center;padding:6px 0;border-bottom:0.5px solid var(--brd);font-size:13px">
+          <div><strong>${v.cargo}</strong><div style="font-size:11px;color:var(--txt3)">${v.empresa}${v.dtAber?' · Aberta em '+new Date(v.dtAber+'T00:00').toLocaleDateString('pt-BR'):''}</div></div>
+          <span class="badge ${SEL_STATUS_BADGE[c.selecaoStatus||'triagem']||'b-and'}">${SEL_STATUS[c.selecaoStatus||'triagem']||'Em triagem'}</span>
+        </div>`;
+      }).join('');
+    })()}
+    ${c.obs?`<div class="det-sec">Observações RH</div>${dr('Anotações',c.obs)}`:''}}
     <!-- SELEÇÃO -->
     <div class="det-sec">Processo seletivo</div>
     <div style="display:flex;gap:8px;margin-bottom:.75rem;flex-wrap:wrap">
@@ -1150,6 +1248,416 @@ ${texto}`;
   }
 };
 
+
+const PERGUNTAS_BANCO = {
+  'motorista': [
+    {txt:'Possui CNH categoria C ou superior válida?', tipo:'eliminatoria'},
+    {txt:'Tem disponibilidade para viagens e trabalho em obras fora da cidade?', tipo:'eliminatoria'},
+    {txt:'Possui experiência com caminhão basculante ou pipa?', tipo:'classificatoria'},
+    {txt:'Tem experiência com transporte de cargas especiais ou produtos perigosos?', tipo:'classificatoria'},
+    {txt:'Qual sua disponibilidade de início?', tipo:'classificatoria'},
+  ],
+  'operador': [
+    {txt:'Possui experiência comprovada com operação da máquina solicitada?', tipo:'eliminatoria'},
+    {txt:'Tem disponibilidade para trabalhar em obra fora da cidade (alojamento)?', tipo:'eliminatoria'},
+    {txt:'Possui curso de operação de máquinas (SENAI, SENAT ou equivalente)?', tipo:'classificatoria'},
+    {txt:'Tem experiência com pavimentação asfáltica ou terraplenagem?', tipo:'classificatoria'},
+    {txt:'Qual sua disponibilidade de início?', tipo:'classificatoria'},
+  ],
+  'engenheiro': [
+    {txt:'Possui registro ativo no CREA?', tipo:'eliminatoria'},
+    {txt:'Tem experiência com obras de pavimentação ou terraplenagem?', tipo:'eliminatoria'},
+    {txt:'Tem experiência com medições de obras públicas e SINAPI/SICRO?', tipo:'classificatoria'},
+    {txt:'Conhece os processos da Caixa Econômica Federal (PLS/GIGOV)?', tipo:'classificatoria'},
+    {txt:'Tem CAT emitido pelo CREA?', tipo:'classificatoria'},
+  ],
+  'servente': [
+    {txt:'Tem disponibilidade para trabalho em obras fora da cidade?', tipo:'eliminatoria'},
+    {txt:'Possui NR-18 (segurança na construção)?', tipo:'classificatoria'},
+    {txt:'Tem experiência em obras de pavimentação ou terraplenagem?', tipo:'classificatoria'},
+    {txt:'Qual sua disponibilidade de início?', tipo:'classificatoria'},
+  ],
+  'default': [
+    {txt:'Tem disponibilidade para início imediato?', tipo:'eliminatoria'},
+    {txt:'Tem disponibilidade para trabalho em obras fora da cidade se necessário?', tipo:'eliminatoria'},
+    {txt:'Possui experiência na área pretendida?', tipo:'classificatoria'},
+    {txt:'Qual sua pretensão salarial?', tipo:'classificatoria'},
+    {txt:'Como ficou sabendo desta vaga?', tipo:'classificatoria'},
+  ]
+};
+
+// ============================================================
+// MÓDULO DE VAGAS
+// ============================================================
+let vagas = [];
+let vagaEditId = null;
+let perguntasVaga = [];
+
+function iniciarListenerVagas(){
+  onSnapshot(query(collection(db,'vagas'),orderBy('criadoEm','desc')),snap=>{
+    vagas=snap.docs.map(d=>({id:d.id,...d.data()}));
+    if(document.getElementById('page-vagas')?.classList.contains('active')) window.renderVagas();
+    // Popular filtro empresa vagas
+    const fve=document.getElementById('fv-empresa');
+    if(fve){while(fve.options.length>1)fve.remove(1);cfg.empresas.forEach(e=>{const o=document.createElement('option');o.value=e.nome;o.textContent=e.nome;fve.appendChild(o);});}
+  });
+}
+
+window.renderVagas = function(){
+  const status=document.getElementById('fv-status')?.value||'';
+  const empresa=document.getElementById('fv-empresa')?.value||'';
+  let res=vagas.filter(v=>(!status||v.status===status)&&(!empresa||v.empresa===empresa));
+  const el=document.getElementById('vagas-lista');
+  if(!res.length){el.innerHTML='<div class="empty">Nenhuma vaga cadastrada.<br>Clique em "+ Nova vaga" para criar.</div>';return;}
+  el.innerHTML=res.map(v=>{
+    const cands=candidatos.filter(c=>(c.vagasIds||[]).includes(v.id));
+    const emProcesso=cands.filter(c=>c.status==='processo').length;
+    const aprovados=cands.filter(c=>(c.selecao||[]).some(e=>e.tipo==='proposta'&&e.resultado==='Aceito')).length;
+    const stBadge={aberta:'b-conc',selecao:'b-and',encerrada:'b-desc'}[v.status]||'b-and';
+    const stLabel={aberta:'Aberta',selecao:'Em seleção',encerrada:'Encerrada'}[v.status]||v.status;
+    return`<div class="card card-c" onclick="window.abrirVaga('${v.id}')">
+      <div class="card-top">
+        <div>
+          <div class="card-name">${v.cargo}</div>
+          <div class="card-sub">${v.empresa} · ${v.qtd||1} vaga${v.qtd>1?'s':''} ${v.local?'· '+v.local:''}</div>
+        </div>
+        <div style="display:flex;flex-direction:column;align-items:flex-end;gap:4px">
+          <span class="badge ${stBadge}">${stLabel}</span>
+          ${v.salDe||v.salAte?`<span style="font-size:11px;color:var(--txt3)">${v.salDe||''}${v.salDe&&v.salAte?' – ':''}${v.salAte||''}</span>`:''}
+        </div>
+      </div>
+      <div style="display:flex;gap:12px;margin-top:8px;font-size:12px;color:var(--txt2)">
+        <span>👥 ${cands.length} candidato${cands.length!==1?'s':''}</span>
+        ${emProcesso?`<span>🔄 ${emProcesso} em processo</span>`:''}
+        ${aprovados?`<span>✅ ${aprovados} aprovado${aprovados>1?'s':''}</span>`:''}
+        ${v.dtAber?`<span>📅 Aberta em ${new Date(v.dtAber+'T00:00').toLocaleDateString('pt-BR')}</span>`:''}
+      </div>
+      ${v.dtPrazo?`<div style="font-size:11px;color:var(--txt3);margin-top:3px">Prazo: ${new Date(v.dtPrazo+'T00:00').toLocaleDateString('pt-BR')}</div>`:''}
+    </div>`;
+  }).join('');
+};
+
+window.onVagaCargoChange = function(){
+  // Auto-sugerir perguntas ao selecionar cargo
+  const cargo=document.getElementById('mv-cargo')?.value.toLowerCase()||'';
+  if(document.getElementById('vt-presel')?.classList.contains('active')) window.sugerirPerguntas();
+};
+
+window.vagaTab = function(tab,btn){
+  document.querySelectorAll('#modal-vaga .tab-btn').forEach(b=>b.classList.remove('active'));
+  document.querySelectorAll('#modal-vaga .tab-pane').forEach(p=>p.classList.remove('active'));
+  if(btn)btn.classList.add('active');
+  document.getElementById('vt-'+tab).classList.add('active');
+  if(tab==='divulg') window.gerarTextoVaga();
+  if(tab==='presel'&&!perguntasVaga.length) window.sugerirPerguntas();
+};
+
+window.sugerirPerguntas = function(){
+  const cargo=(document.getElementById('mv-cargo')?.value||'').toLowerCase();
+  let chave='default';
+  if(cargo.includes('motorista')) chave='motorista';
+  else if(cargo.includes('operador')) chave='operador';
+  else if(cargo.includes('engenheiro')||cargo.includes('analista')) chave='engenheiro';
+  else if(cargo.includes('servente')||cargo.includes('auxiliar')) chave='servente';
+  const sugeridas=PERGUNTAS_BANCO[chave]||PERGUNTAS_BANCO['default'];
+  if(!perguntasVaga.length) perguntasVaga=[...sugeridas.map((p,i)=>({id:'p'+Date.now()+i,...p}))];
+  window.renderPerguntas();
+};
+
+window.renderPerguntas = function(){
+  const el=document.getElementById('mv-perguntas-lista');
+  el.innerHTML=perguntasVaga.map((p,i)=>`
+    <div class="exp-card" style="margin-bottom:8px">
+      <button class="exp-del" onclick="window.delPergunta(${i})">×</button>
+      <div class="g2" style="margin-bottom:6px">
+        <div class="fg" style="grid-column:span 2"><label>Pergunta</label><input type="text" id="perg-txt-${p.id}" value="${p.txt||''}" placeholder="Digite a pergunta..."></div>
+      </div>
+      <div class="fg"><label>Tipo</label>
+        <select id="perg-tipo-${p.id}">
+          <option value="eliminatoria" ${p.tipo==='eliminatoria'?'selected':''}>Eliminatória — resposta errada descarta o candidato</option>
+          <option value="classificatoria" ${p.tipo==='classificatoria'?'selected':''}>Classificatória — ajuda a ranquear candidatos</option>
+        </select>
+      </div>
+    </div>`).join('');
+};
+
+window.addPergunta = function(){
+  window.savePerguntasVals();
+  perguntasVaga.push({id:'p'+Date.now(),txt:'',tipo:'classificatoria'});
+  window.renderPerguntas();
+};
+window.delPergunta = function(i){window.savePerguntasVals();perguntasVaga.splice(i,1);window.renderPerguntas();};
+window.savePerguntasVals = function(){
+  perguntasVaga.forEach(p=>{
+    const t=document.getElementById('perg-txt-'+p.id);const tp=document.getElementById('perg-tipo-'+p.id);
+    if(t)p.txt=t.value;if(tp)p.tipo=tp.value;
+  });
+};
+
+window.gerarTextoVaga = function(){
+  const cargo=document.getElementById('mv-cargo')?.value||'';
+  const empresa=document.getElementById('mv-empresa')?.value||'';
+  const qtd=document.getElementById('mv-qtd')?.value||'1';
+  const tipo=document.getElementById('mv-tipo')?.value||'';
+  const salDe=document.getElementById('mv-sal-de')?.value||'';
+  const salAte=document.getElementById('mv-sal-ate')?.value||'';
+  const requisitos=document.getElementById('mv-requisitos')?.value||'';
+  const beneficios=document.getElementById('mv-beneficios')?.value||'';
+  const plat=document.getElementById('mv-plat')?.value||'indeed';
+  const linkVaga=vagaEditId?`${BASE_URL}/candidatura.html?vaga=${encodeURIComponent(cargo)}`:`${BASE_URL}/candidatura.html?vaga=${encodeURIComponent(cargo)}`;
+  const salario=salDe||salAte?(salDe&&salAte?`${salDe} a ${salAte}`:salDe||salAte):'A combinar';
+  const tipoLabel=tipo||'CLT';
+  let texto='';
+  if(plat==='indeed'){
+    texto=`${cargo}
+${empresa} — ${tipoLabel}
+
+SOBRE A VAGA
+Estamos com ${qtd} vaga${qtd>1?'s':''} aberta${qtd>1?'s':''} para ${cargo} para atuar em obras de pavimentação e terraplenagem.
+
+REQUISITOS
+${requisitos||'• Experiência na função
+• Disponibilidade para trabalho em campo
+• Comprometimento e responsabilidade'}
+
+BENEFÍCIOS
+${beneficios||'• Vale transporte
+• Alimentação
+• Seguro de vida em grupo'}
+
+REMUNERAÇÃO
+${salario} — ${tipoLabel}
+
+COMO SE CANDIDATAR
+Acesse o link abaixo e preencha o formulário de candidatura:
+${linkVaga}`;
+  } else if(plat==='instagram'){
+    texto=`🚨 VAGA ABERTA — ${cargo.toUpperCase()}
+
+📍 ${empresa}
+💼 ${tipoLabel} | 💰 ${salario}
+
+✅ Requisitos:
+${requisitos?requisitos.split('
+').slice(0,3).map(r=>'• '+r.replace(/^•\s*/,'')).join('
+'):'• Experiência na função
+• Disponibilidade para campo
+• Comprometimento'}
+
+🎯 Interessado? Candidate-se pelo link na bio ou acesse:
+${linkVaga}
+
+📲 Compartilhe com quem precisa!
+#vaga #emprego #construção #pavimentação #${cargo.toLowerCase().replace(/\s+/g,'')}`;
+  } else if(plat==='whatsapp'){
+    texto=`*VAGA — ${cargo.toUpperCase()}*
+🏢 ${empresa}
+📋 ${tipoLabel} | 💰 ${salario}
+
+*Requisitos:*
+${requisitos?requisitos.split('
+').slice(0,3).map(r=>'• '+r.replace(/^•\s*/,'')).join('
+'):'• Experiência na função
+• Disponibilidade para campo'}
+
+*Para se candidatar, acesse:*
+${linkVaga}
+
+_Compartilhe com quem tiver interesse!_ 👇`;
+  } else if(plat==='linkedin'){
+    texto=`Estamos contratando: ${cargo}
+
+A ${empresa} está com vaga aberta para ${cargo} para integrar nossa equipe de obras de pavimentação e infraestrutura.
+
+O que buscamos:
+${requisitos||'• Experiência comprovada na função
+• Comprometimento e atenção à segurança
+• Disponibilidade para trabalho em campo'}
+
+O que oferecemos:
+${beneficios||'• Vale transporte e alimentação
+• Seguro de vida em grupo
+• Remuneração compatível com o mercado'}
+• Remuneração: ${salario}
+• Contrato: ${tipoLabel}
+
+Interessados, acesse o link para se candidatar:
+${linkVaga}`;
+  }
+  document.getElementById('mv-texto-gerado').textContent=texto;
+};
+
+window.copiarTextoVaga = function(){
+  const txt=document.getElementById('mv-texto-gerado')?.textContent||'';
+  navigator.clipboard.writeText(txt).then(()=>toast('Texto copiado!','ok')).catch(()=>toast('Selecione e copie manualmente.'));
+};
+
+window.abrirNovaVaga = function(){
+  vagaEditId=null;perguntasVaga=[];
+  document.getElementById('mv-title').textContent='Nova vaga';
+  document.getElementById('mv-cargo').value='';
+  document.getElementById('mv-empresa').value='';
+  document.getElementById('mv-qtd').value='1';
+  document.getElementById('mv-tipo').value='';
+  document.getElementById('mv-status').value='aberta';
+  document.getElementById('mv-sal-de').value='';
+  document.getElementById('mv-sal-ate').value='';
+  document.getElementById('mv-dt-aber').value=new Date().toISOString().slice(0,10);
+  document.getElementById('mv-dt-prazo').value='';
+  document.getElementById('mv-obra').value='';
+  document.getElementById('mv-requisitos').value='';
+  document.getElementById('mv-beneficios').value='';
+  document.getElementById('mv-obs').value='';
+  document.getElementById('mv-perguntas-lista').innerHTML='';
+  document.getElementById('mv-texto-gerado').textContent='Preencha os dados da vaga e clique em "Gerar texto".';
+  // Popular selects
+  const mc=document.getElementById('mv-cargo');while(mc.options.length>1)mc.remove(1);
+  cfg.cargos.forEach(c=>{const o=document.createElement('option');o.value=c.nome;o.textContent=c.nome;mc.appendChild(o);});
+  const me=document.getElementById('mv-empresa');while(me.options.length>1)me.remove(1);
+  cfg.empresas.forEach(e=>{const o=document.createElement('option');o.value=e.nome;o.textContent=e.nome;me.appendChild(o);});
+  const mt=document.getElementById('mv-tipo');while(mt.options.length>1)mt.remove(1);
+  cfg.tiposcontrato.forEach(t=>{const o=document.createElement('option');o.value=t.nome;o.textContent=t.nome;mt.appendChild(o);});
+  const mo=document.getElementById('mv-obra');while(mo.options.length>1)mo.remove(1);
+  cfg.obras.forEach(o=>{const op=document.createElement('option');op.value=o.nome;op.textContent=o.nome+(o.local?' — '+o.local:'');mo.appendChild(op);});
+  // Ativar aba dados
+  document.querySelectorAll('#modal-vaga .tab-btn').forEach((b,i)=>{b.classList.toggle('active',i===0);});
+  document.querySelectorAll('#modal-vaga .tab-pane').forEach((p,i)=>{p.classList.toggle('active',i===0);});
+  openModal('modal-vaga');
+};
+
+window.salvarVaga = async function(){
+  window.savePerguntasVals();
+  const cargo=document.getElementById('mv-cargo')?.value;
+  const empresa=document.getElementById('mv-empresa')?.value;
+  if(!cargo||!empresa){toast('Preencha cargo e empresa.','er');return;}
+  const data={
+    cargo,empresa,
+    qtd:parseInt(document.getElementById('mv-qtd')?.value)||1,
+    tipo:document.getElementById('mv-tipo')?.value||'',
+    status:document.getElementById('mv-status')?.value||'aberta',
+    salDe:document.getElementById('mv-sal-de')?.value||'',
+    salAte:document.getElementById('mv-sal-ate')?.value||'',
+    dtAber:document.getElementById('mv-dt-aber')?.value||'',
+    dtPrazo:document.getElementById('mv-dt-prazo')?.value||'',
+    local:document.getElementById('mv-obra')?.value||'',
+    requisitos:document.getElementById('mv-requisitos')?.value||'',
+    beneficios:document.getElementById('mv-beneficios')?.value||'',
+    obs:document.getElementById('mv-obs')?.value||'',
+    perguntas:perguntasVaga.filter(p=>p.txt).map(p=>({txt:p.txt,tipo:p.tipo})),
+    linkCandidatura:`${BASE_URL}/candidatura.html?vaga=${encodeURIComponent(cargo)}`,
+    atualizadoEm:new Date().toISOString(),
+  };
+  try{
+    if(vagaEditId){await setDoc(doc(db,'vagas',vagaEditId),{...data,criadoEm:(vagas.find(v=>v.id===vagaEditId)?.criadoEm||new Date().toISOString())});toast('Vaga atualizada!','ok');}
+    else{data.criadoEm=new Date().toISOString();data.criadoPor=CU?.email;await addDoc(collection(db,'vagas'),data);toast('Vaga criada!','ok');}
+    closeModal('modal-vaga');
+  }catch(e){toast('Erro: '+e.message,'er');}
+};
+
+window.abrirVaga = function(id){
+  const v=vagas.find(x=>x.id===id);if(!v)return;
+  document.getElementById('mvd-titulo').textContent=v.cargo;
+  document.getElementById('mvd-sub').textContent=v.empresa+(v.local?' · '+v.local:'')+(v.tipo?' · '+v.tipo:'');
+  const stBadge={aberta:'b-conc',selecao:'b-and',encerrada:'b-desc'}[v.status]||'b-and';
+  const stLabel={aberta:'Aberta',selecao:'Em seleção',encerrada:'Encerrada'}[v.status]||v.status;
+  const cands=candidatos.filter(c=>(c.vagasIds||[]).includes(id));
+  // Funil
+  const emTriagem=cands.filter(c=>!c.selecaoStatus||c.selecaoStatus==='triagem').length;
+  const emEntrev=cands.filter(c=>c.selecaoStatus==='entrevista').length;
+  const emAval=cands.filter(c=>c.selecaoStatus==='avaliacao').length;
+  const emProp=cands.filter(c=>c.selecaoStatus==='proposta').length;
+  const aprov=cands.filter(c=>c.selecaoStatus==='aprovado').length;
+  const reprov=cands.filter(c=>c.selecaoStatus==='reprovado').length;
+  document.getElementById('mvd-body').innerHTML=`
+    <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:1rem">
+      <span class="badge ${stBadge}">${stLabel}</span>
+      <span class="badge b-proc">${v.qtd||1} vaga${v.qtd>1?'s':''}</span>
+      ${v.salDe||v.salAte?`<span class="badge b-desc">${v.salDe||''}${v.salDe&&v.salAte?' – ':''}${v.salAte||''}</span>`:''}
+    </div>
+    ${v.requisitos?`<div style="font-size:13px;margin-bottom:.75rem"><strong>Requisitos:</strong><br>${v.requisitos}</div>`:''}
+    ${v.beneficios?`<div style="font-size:13px;margin-bottom:.75rem"><strong>Benefícios:</strong><br>${v.beneficios}</div>`:''}
+    <div style="background:var(--bg);border-radius:var(--r);padding:10px 12px;margin-bottom:1rem">
+      <div style="font-size:12px;font-weight:500;color:var(--txt2);margin-bottom:8px">FUNIL DE CANDIDATOS</div>
+      <div style="display:flex;gap:6px;flex-wrap:wrap">
+        ${[['Total',cands.length,'b-cont'],['Triagem',emTriagem,'b-and'],['Entrevista',emEntrev,'b-proc'],['Avaliação',emAval,'b-proc'],['Proposta',emProp,'b-adm'],['Aprovado',aprov,'b-conc'],['Reprovado',reprov,'b-desc']].map(([l,n,b])=>`<div style="text-align:center;min-width:60px"><div style="font-size:18px;font-weight:500">${n}</div><div style="font-size:10px;color:var(--txt3)">${l}</div></div>`).join('<div style="color:var(--brd2);line-height:2">›</div>')}
+      </div>
+    </div>
+    <div style="display:flex;gap:8px;margin-bottom:1rem;flex-wrap:wrap">
+      <button class="btn btn-sm btn-p" onclick="window.vincularCandidato('${id}')">+ Vincular candidato</button>
+      <button class="btn btn-sm" onclick="window.copiarLink('${v.linkCandidatura||BASE_URL+'/candidatura.html?vaga='+encodeURIComponent(v.cargo)}')">📋 Copiar link</button>
+      <button class="btn btn-sm" onclick="window.editarVaga('${id}')">✏️ Editar vaga</button>
+      <button class="btn btn-sm btn-d" onclick="window.encerrarVaga('${id}')">Encerrar vaga</button>
+    </div>
+    ${(v.perguntas||[]).length?`<div style="margin-bottom:1rem"><div style="font-size:12px;font-weight:500;color:var(--txt2);margin-bottom:.5rem">PERGUNTAS DE PRÉ-SELEÇÃO</div>
+    ${v.perguntas.map((p,i)=>`<div style="font-size:13px;padding:6px 0;border-bottom:0.5px solid var(--brd)"><span class="badge ${p.tipo==='eliminatoria'?'b-desc':'b-proc'}" style="margin-right:6px">${p.tipo==='eliminatoria'?'Eliminatória':'Classificatória'}</span>${p.txt}</div>`).join('')}</div>`:''}
+    ${cands.length?`<div><div style="font-size:12px;font-weight:500;color:var(--txt2);margin-bottom:.5rem">CANDIDATOS VINCULADOS</div>
+    ${cands.map(c=>`<div class="card card-c" onclick="closeModal('modal-vaga-det');abrirCand('${c.id}')" style="margin-bottom:6px">
+      <div class="card-top"><div><div class="card-name" style="font-size:13px">${c.nome}</div><div class="card-sub">${c.tel||''}</div></div>
+      <span class="badge ${SEL_STATUS_BADGE[c.selecaoStatus||'triagem']||'b-and'}">${SEL_STATUS[c.selecaoStatus||'triagem']||'Em triagem'}</span></div>
+    </div>`).join('')}</div>`:'<div class="empty" style="padding:1rem">Nenhum candidato vinculado ainda.</div>'}`;
+  openModal('modal-vaga-det');
+};
+
+window.vincularCandidato = function(vagaId){
+  // Selecionar candidato do banco para vincular
+  const cands=candidatos.filter(c=>!(c.vagasIds||[]).includes(vagaId));
+  if(!cands.length){toast('Todos os candidatos já estão vinculados.','er');return;}
+  const nome=prompt('Digite o nome ou CPF do candidato para vincular:');
+  if(!nome)return;
+  const found=cands.filter(c=>c.nome?.toLowerCase().includes(nome.toLowerCase())||c.cpf?.includes(nome));
+  if(!found.length){toast('Candidato não encontrado.','er');return;}
+  if(found.length===1){
+    window.fazerVinculo(vagaId,found[0].id,found[0].nome);
+  } else {
+    const escolha=prompt('Encontrados:
+'+found.map((c,i)=>`${i+1}. ${c.nome} — ${c.cargo}`).join('
+')+'
+
+Digite o número:');
+    const idx=parseInt(escolha)-1;
+    if(idx>=0&&idx<found.length) window.fazerVinculo(vagaId,found[idx].id,found[idx].nome);
+  }
+};
+
+window.fazerVinculo = async function(vagaId,candId,nome){
+  try{
+    const cand=candidatos.find(c=>c.id===candId);
+    const vagasAtuais=cand?.vagasIds||[];
+    if(vagasAtuais.includes(vagaId)){toast(`${nome} já está vinculado.`,'er');return;}
+    await updateDoc(doc(db,'candidatos',candId),{
+      vagasIds:[...vagasAtuais,vagaId],
+      status:'processo',
+      selecaoStatus:'triagem',
+      atualizadoEm:new Date().toISOString()
+    });
+    // Atualizar status vaga
+    await updateDoc(doc(db,'vagas',vagaId),{status:'selecao',atualizadoEm:new Date().toISOString()});
+    toast(`${nome} vinculado à vaga!`,'ok');
+    setTimeout(()=>window.abrirVaga(vagaId),500);
+  }catch(e){toast('Erro: '+e.message,'er');}
+};
+
+window.editarVaga = function(id){
+  const v=vagas.find(x=>x.id===id);if(!v)return;
+  vagaEditId=id;perguntasVaga=[...(v.perguntas||[]).map((p,i)=>({id:'pe'+i,...p}))];
+  closeModal('modal-vaga-det');
+  window.abrirNovaVaga();
+  document.getElementById('mv-title').textContent='Editar vaga';
+  setTimeout(()=>{
+    const s=(i,val)=>{const el=document.getElementById(i);if(el&&val!=null)el.value=val;};
+    s('mv-cargo',v.cargo);s('mv-empresa',v.empresa);s('mv-qtd',v.qtd);s('mv-tipo',v.tipo);
+    s('mv-status',v.status);s('mv-sal-de',v.salDe);s('mv-sal-ate',v.salAte);
+    s('mv-dt-aber',v.dtAber);s('mv-dt-prazo',v.dtPrazo);s('mv-obra',v.local);
+    s('mv-requisitos',v.requisitos);s('mv-beneficios',v.beneficios);s('mv-obs',v.obs);
+    if(perguntasVaga.length) window.renderPerguntas();
+  },100);
+};
+
+window.encerrarVaga = async function(id){
+  if(!confirm('Encerrar esta vaga?'))return;
+  try{await updateDoc(doc(db,'vagas',id),{status:'encerrada',atualizadoEm:new Date().toISOString()});closeModal('modal-vaga-det');toast('Vaga encerrada.','ok');}
+  catch(e){toast('Erro: '+e.message,'er');}
+};
 
 // ============================================================
 // MÓDULO DE SELEÇÃO
