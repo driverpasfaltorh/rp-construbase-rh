@@ -188,11 +188,12 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
         <a id="link-candidatura" href="#" target="_blank" class="btn btn-sm" style="text-decoration:none">🔗 Link candidatura</a>
       </div>
       <div class="filter-row">
-        <div class="fg"><label>Busca</label><div style="display:flex;gap:6px"><input type="text" id="fb-busca" placeholder="Nome, CPF, cargo..." oninput="renderCands()" onkeydown="if(event.key==='Enter')renderCands()" style="min-width:160px;flex:1"><button class="btn btn-p btn-sm" onclick="renderCands()" style="white-space:nowrap">Buscar</button></div></div>
+        <div class="fg"><label>Busca</label><input type="text" id="fb-busca" placeholder="Nome, CPF, cargo..." onkeydown="if(event.key==='Enter')renderCands()" style="min-width:180px"></div>
         <div class="fg"><label>Cargo</label><select id="fb-cargo" onchange="renderCands()"><option value="">Todos</option></select></div>
         <div class="fg"><label>Status</label><select id="fb-status" onchange="renderCands()"><option value="">Todos</option><option value="disponivel">Disponível</option><option value="processo">Em processo</option><option value="contratado">Contratado</option><option value="descartado">Descartado</option></select></div>
         <div class="fg"><label>Origem</label><select id="fb-origem" onchange="renderCands()"><option value="">Todas</option></select></div>
-        <div class="fg"><label>Competência</label><input type="text" id="fb-comp" placeholder="Ex: Fresa, SINAPI..." oninput="renderCands()" style="min-width:140px"></div>
+        <div class="fg"><label>Competência</label><input type="text" id="fb-comp" placeholder="Ex: Fresa, SINAPI..." onkeydown="if(event.key==='Enter')renderCands()" style="min-width:140px"></div>
+        <div class="fg" style="justify-content:flex-end"><label>&nbsp;</label><button class="btn btn-p" onclick="renderCands()" style="white-space:nowrap;height:38px">Buscar</button></div>
       </div>
       <div class="res-count" id="cand-count"></div>
       <div id="cand-lista"></div>
@@ -639,7 +640,7 @@ function renderPainel(){
 }
 
 // CANDIDATOS
-function renderCands(){
+window.renderCands = function renderCands(){
   if(!document.getElementById('page-candidatos')?.classList.contains('active'))return;
   const busca=(document.getElementById('fb-busca')?.value||'').toLowerCase();
   const cargo=document.getElementById('fb-cargo')?.value||'';
