@@ -649,7 +649,19 @@ window.salvarCand=async function(){
     atualizadoEm:new Date().toISOString(),criadoPor:CU?.email
   };
   try{
-    if(editCandId){await setDoc(doc(db,'candidatos',editCandId),data);toast('Candidato atualizado!','ok');}
+    if(editCandId){
+      // Preservar campos que não fazem parte do formulário de cadastro
+      const candAtual=candidatos.find(c=>c.id===editCandId)||{};
+      const preservar={};
+      if(candAtual.selecao) preservar.selecao=candAtual.selecao;
+      if(candAtual.selecaoStatus) preservar.selecaoStatus=candAtual.selecaoStatus;
+      if(candAtual.docsRecebidos) preservar.docsRecebidos=candAtual.docsRecebidos;
+      if(candAtual.docsStatus) preservar.docsStatus=candAtual.docsStatus;
+      if(candAtual.docsEnviadoEm) preservar.docsEnviadoEm=candAtual.docsEnviadoEm;
+      if(candAtual.cadastroCompleto) preservar.cadastroCompleto=candAtual.cadastroCompleto;
+      await setDoc(doc(db,'candidatos',editCandId),{...data,...preservar});
+      toast('Candidato atualizado!','ok');
+    }
     else{await addDoc(collection(db,'candidatos'),data);toast('Candidato salvo!','ok');}
     limparCad();
   }catch(e){toast('Erro ao salvar: '+e.message,'er');}
