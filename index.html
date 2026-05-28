@@ -63,7 +63,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
 .card-meta{font-size:11px;color:var(--txt3);margin-top:5px;display:flex;gap:10px;flex-wrap:wrap}
 .badge{font-size:11px;padding:2px 8px;border-radius:10px;font-weight:500;white-space:nowrap}
 .b-disp{background:var(--gbg);color:var(--gtxt)}.b-proc{background:var(--abg);color:var(--atxt)}.b-cont{background:var(--bbg);color:var(--btxt)}.b-desc{background:var(--bg);color:var(--txt3)}
-.b-and{background:var(--abg);color:var(--atxt)}.b-conc{background:var(--gbg);color:var(--gtxt)}
+.b-and{background:var(--abg);color:var(--atxt)}.b-conc{background:var(--gbg);color:var(--gtxt)}.b-adm{background:var(--bbg);color:var(--btxt)}
 .ob-indeed{background:#EEF2FF;color:#3730A3}.ob-ind{background:#FFF7ED;color:#9A3412}.ob-esp{background:#F0FDF4;color:#166534}.ob-rs{background:#FDF2F8;color:#9D174D}.ob-fp{background:var(--pbg);color:var(--ptxt)}
 .prog-wrap{background:var(--brd);border-radius:4px;height:6px;overflow:hidden;margin:8px 0 4px}
 .prog-bar{height:6px;border-radius:4px;background:var(--green);transition:width .3s}
@@ -145,6 +145,8 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
       <div class="nav-sec">Recrutamento</div>
       <div class="ni" onclick="go('candidatos')"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="8" cy="5" r="3"/><path d="M2 14c0-3.3 2.7-6 6-6s6 2.7 6 6"/></svg>Banco de candidatos</div>
       <div class="ni" onclick="go('novo-cand')"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="7" cy="5" r="3"/><path d="M1 14c0-3.3 2.7-6 6-6"/><line x1="12" y1="9" x2="12" y2="15"/><line x1="9" y1="12" x2="15" y2="12"/></svg>Novo candidato</div>
+      <div class="nav-sec">Seleção</div>
+      <div class="ni" onclick="go('selecao')"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="8" cy="8" r="6"/><path d="M5 8l2 2 4-4"/></svg>Processos seletivos</div>
       <div class="nav-sec">Admissão</div>
       <div class="ni" onclick="go('admissoes')"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="2" y="2" width="12" height="12" rx="1"/><path d="M5 8l2 2 4-4"/></svg>Checklist de admissão</div>
       <div class="nav-sec">Administração</div>
@@ -259,6 +261,20 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
       </div>
     </div>
 
+    <!-- SELEÇÃO -->
+    <div id="page-selecao" class="page">
+      <div class="flex-row" style="justify-content:space-between;margin-bottom:1rem">
+        <div class="page-title" style="margin:0">Processos seletivos</div>
+      </div>
+      <div class="filter-row">
+        <div class="fg"><label>Busca</label><input type="text" id="sel-busca" placeholder="Nome, cargo..." style="min-width:180px" onkeydown="if(event.key==='Enter')window.renderSelecao()"></div>
+        <div class="fg"><label>Status</label><select id="sel-status" onchange="window.renderSelecao()"><option value="">Todos</option><option value="triagem">Em triagem</option><option value="entrevista">Em entrevista</option><option value="avaliacao">Em avaliação</option><option value="proposta">Proposta enviada</option><option value="aprovado">Aprovado</option><option value="reprovado">Reprovado</option></select></div>
+        <div class="fg"><label>&nbsp;</label><button class="btn btn-p" onclick="window.renderSelecao()" style="height:38px">Buscar</button></div>
+      </div>
+      <div class="res-count" id="sel-count"></div>
+      <div id="sel-lista"></div>
+    </div>
+
     <!-- ADMISSÕES -->
     <div id="page-admissoes" class="page">
       <div id="adm-lista-v">
@@ -333,6 +349,31 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
   <div class="modal-hdr"><span class="modal-title" id="mcfg-title">Item</span><button class="modal-x" onclick="closeModal('modal-cfg')">×</button></div>
   <div id="mcfg-body"></div>
   <div class="btn-row"><button class="btn btn-p" onclick="salvarCfgItem()">Salvar</button><button class="btn" onclick="closeModal('modal-cfg')">Cancelar</button></div>
+</div></div>
+
+<!-- MODAL EVENTO SELEÇÃO -->
+<div id="modal-sel-evento" class="modal-ov"><div class="modal" style="max-width:520px">
+  <div class="modal-hdr"><span class="modal-title" id="mse-title">Registrar evento</span><button class="modal-x" onclick="closeModal('modal-sel-evento')">×</button></div>
+  <div class="fg" style="margin-bottom:10px">
+    <label>Tipo de evento *</label>
+    <select id="mse-tipo" onchange="window.onTipoEvento()">
+      <option value="">Selecione...</option>
+      <option value="triagem">Triagem</option>
+      <option value="entrevista">Entrevista</option>
+      <option value="avaliacao">Teste / Avaliação</option>
+      <option value="proposta">Proposta</option>
+      <option value="obs">Observação livre</option>
+    </select>
+  </div>
+  <div id="mse-campos"></div>
+  <div class="fg" style="margin-bottom:10px">
+    <label>Observações</label>
+    <textarea id="mse-obs" rows="3" placeholder="Anotações sobre este evento..."></textarea>
+  </div>
+  <div class="btn-row">
+    <button class="btn btn-p" onclick="window.salvarEvento()">Salvar evento</button>
+    <button class="btn" onclick="closeModal('modal-sel-evento')">Cancelar</button>
+  </div>
 </div></div>
 
 <div id="toast" class="toast"></div>
@@ -497,13 +538,14 @@ function iniciarListeners(){
 window.go=function(page){
   document.querySelectorAll('.ni').forEach(i=>i.classList.remove('active'));
   document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
-  const map={painel:0,candidatos:1,'novo-cand':2,admissoes:3,config:4,usuarios:5};
+  const map={painel:0,candidatos:1,'novo-cand':2,selecao:3,admissoes:4,config:5,usuarios:6};
   const nis=document.querySelectorAll('.ni');
   if(map[page]!==undefined)nis[map[page]]?.classList.add('active');
   const el=document.getElementById('page-'+page);
   if(el)el.classList.add('active');
   if(page==='painel')renderPainel();
   if(page==='candidatos')renderCands();
+  if(page==='selecao')window.renderSelecao();
   if(page==='admissoes'){document.getElementById('adm-lista-v').style.display='block';document.getElementById('adm-det-v').style.display='none';renderAdms();}
   if(page==='config'){document.querySelector('.tab-btn.active')?.click()||cfgTab('cargos',document.querySelector('.tab-btn'));}
   if(page==='usuarios')renderUsuarios();
@@ -734,6 +776,30 @@ window.abrirCand=function(id){
     ${expHtml}${formHtml}
     ${docsHtml}
     ${c.obs?`<div class="det-sec">Observações RH</div>${dr('Anotações',c.obs)}`:''}
+    <!-- SELEÇÃO -->
+    <div class="det-sec">Processo seletivo</div>
+    <div style="display:flex;gap:8px;margin-bottom:.75rem;flex-wrap:wrap">
+      <button class="btn btn-sm btn-s" onclick="window.abrirModalEvento('${c.id}')">+ Registrar evento</button>
+      ${c.selecaoStatus?`<span class="badge ${SEL_STATUS_BADGE[c.selecaoStatus]||'b-and'}">${SEL_STATUS[c.selecaoStatus]||''}</span>`:'<span style="font-size:12px;color:var(--txt3)">Nenhum evento registrado</span>'}
+    </div>
+    ${(c.selecao||[]).length?`<div style="border-left:2px solid var(--brd2);padding-left:12px;margin-bottom:.5rem">
+      ${[...(c.selecao||[])].reverse().map((ev,ri)=>{
+        const i=(c.selecao||[]).length-1-ri;
+        const tipoLabel={triagem:'Triagem',entrevista:'Entrevista',avaliacao:'Avaliação',proposta:'Proposta',obs:'Observação'}[ev.tipo]||ev.tipo;
+        return`<div style="margin-bottom:12px;position:relative">
+          <div style="display:flex;justify-content:space-between;align-items:flex-start">
+            <div>
+              <span style="font-size:13px;font-weight:500">${EVENTO_ICONS[ev.tipo]||'•'} ${tipoLabel}</span>
+              ${ev.resultado?`<span class="badge ${ev.resultado==='Aprovado'||ev.resultado==='Aceito'?'b-conc':ev.resultado==='Reprovado'||ev.resultado==='Recusado'?'b-desc':'b-and'}" style="margin-left:6px">${ev.resultado}</span>`:''}
+            </div>
+            <button onclick="window.excluirEvento('${c.id}',${i})" style="background:none;border:none;cursor:pointer;color:var(--txt3);font-size:12px;padding:0">✕</button>
+          </div>
+          ${ev.data?`<div style="font-size:11px;color:var(--txt3);margin-top:2px">${new Date(ev.data+'T00:00').toLocaleDateString('pt-BR')}${ev.resp?' · '+ev.resp:''}${ev.modal?' · '+ev.modal:''}</div>`:''}
+          ${ev.valor?`<div style="font-size:12px;color:var(--txt2);margin-top:2px">Proposta: ${ev.valor}</div>`:''}
+          ${ev.obs?`<div style="font-size:12px;color:var(--txt2);margin-top:3px;font-style:italic">"${ev.obs}"</div>`:''}
+        </div>`;
+      }).join('')}
+    </div>`:''}
     <div style="display:flex;gap:8px;margin-top:1rem;flex-wrap:wrap">
       <button class="btn btn-sm" onclick="editarCand('${c.id}');closeModal('modal-cand')">Editar cadastro</button>
       <button class="btn btn-sm btn-p" onclick="iniciarAdmDe('${c.id}');closeModal('modal-cand')">Iniciar admissão</button>
@@ -1070,6 +1136,178 @@ ${texto}`;
     btn.textContent='✨ Tentar novamente';btn.disabled=false;
     console.error('Erro extração CV:',err);
   }
+};
+
+
+// ============================================================
+// MÓDULO DE SELEÇÃO
+// ============================================================
+const SEL_STATUS = {
+  triagem:'Em triagem', entrevista:'Em entrevista', avaliacao:'Em avaliação',
+  proposta:'Proposta enviada', aprovado:'Aprovado', reprovado:'Reprovado'
+};
+const SEL_STATUS_BADGE = {
+  triagem:'b-and', entrevista:'b-cont', avaliacao:'b-proc',
+  proposta:'b-adm', aprovado:'b-conc', reprovado:'b-desc'
+};
+const EVENTO_ICONS = {
+  triagem:'🔍', entrevista:'🗣️', avaliacao:'📝', proposta:'📋', obs:'💬'
+};
+
+let selCandId = null; // candidato sendo editado no modal
+
+window.renderSelecao = function(){
+  if(!document.getElementById('page-selecao')?.classList.contains('active')) return;
+  const busca = (document.getElementById('sel-busca')?.value||'').toLowerCase();
+  const status = document.getElementById('sel-status')?.value||'';
+  // Candidatos em processo seletivo (status = processo) ou com eventos registrados
+  let res = candidatos.filter(c=>{
+    const temEvento = (c.selecao||[]).length > 0;
+    const emProcesso = c.status === 'processo';
+    if(!temEvento && !emProcesso) return false;
+    if(busca && !c.nome?.toLowerCase().includes(busca) && !c.cargo?.toLowerCase().includes(busca)) return false;
+    if(status){
+      const ultStatus = c.selecaoStatus || (c.status==='processo'?'triagem':'');
+      if(ultStatus !== status) return false;
+    }
+    return true;
+  });
+  document.getElementById('sel-count').textContent = `${res.length} candidato${res.length!==1?'s':''} em processo`;
+  const el = document.getElementById('sel-lista');
+  if(!res.length){el.innerHTML='<div class="empty">Nenhum candidato em processo seletivo.<br>Abra a ficha de um candidato e clique em "Iniciar seleção".</div>';return;}
+  el.innerHTML = res.map(c=>{
+    const eventos = c.selecao||[];
+    const ultEvento = eventos[eventos.length-1];
+    const stLabel = SEL_STATUS[c.selecaoStatus||'triagem']||'Em triagem';
+    const stBadge = SEL_STATUS_BADGE[c.selecaoStatus||'triagem']||'b-and';
+    return `<div class="card card-c" onclick="abrirFichaSelecao('${c.id}')">
+      <div class="card-top">
+        <div>
+          <div class="card-name">${c.nome}</div>
+          <div class="card-sub">${c.cargo} · ${c.cidade||'—'}</div>
+        </div>
+        <div style="display:flex;flex-direction:column;align-items:flex-end;gap:4px">
+          <span class="badge ${stBadge}">${stLabel}</span>
+          ${eventos.length?`<span style="font-size:11px;color:var(--txt3)">${eventos.length} evento${eventos.length>1?'s':''}</span>`:''}
+        </div>
+      </div>
+      ${ultEvento?`<div style="font-size:12px;color:var(--txt2);margin-top:6px;padding-top:6px;border-top:0.5px solid var(--brd)">
+        ${EVENTO_ICONS[ultEvento.tipo]||'•'} <strong>${ultEvento.tipo==='triagem'?'Triagem':ultEvento.tipo==='entrevista'?'Entrevista':ultEvento.tipo==='avaliacao'?'Avaliação':ultEvento.tipo==='proposta'?'Proposta':'Observação'}</strong>
+        ${ultEvento.resultado?'— '+ultEvento.resultado:''} 
+        <span style="color:var(--txt3)">${ultEvento.data?'em '+new Date(ultEvento.data+'T00:00').toLocaleDateString('pt-BR'):''}</span>
+        ${ultEvento.obs?`<div style="font-size:11px;color:var(--txt3);margin-top:2px">${ultEvento.obs.slice(0,80)}${ultEvento.obs.length>80?'...':''}</div>`:''}
+      </div>`:''}
+    </div>`;
+  }).join('');
+};
+
+window.abrirFichaSelecao = function(id){
+  // Abre a ficha do candidato no modal
+  abrirCand(id);
+};
+
+window.onTipoEvento = function(){
+  const tipo = document.getElementById('mse-tipo').value;
+  const el = document.getElementById('mse-campos');
+  if(tipo==='triagem'){
+    el.innerHTML=`<div class="fg" style="margin-bottom:10px"><label>Resultado *</label><select id="mse-resultado"><option value="">—</option><option value="Aprovado para entrevista">Aprovado para entrevista</option><option value="Aprovado para avaliação">Aprovado para avaliação</option><option value="Mantido no banco">Mantido no banco de talentos</option><option value="Reprovado">Reprovado</option></select></div>
+    <div class="fg" style="margin-bottom:10px"><label>Data</label><input type="date" id="mse-data" value="${new Date().toISOString().slice(0,10)}"></div>
+    <div class="fg" style="margin-bottom:10px"><label>Responsável pela triagem</label><input type="text" id="mse-resp" placeholder="Nome do responsável"></div>`;
+  } else if(tipo==='entrevista'){
+    el.innerHTML=`<div class="g2" style="margin-bottom:10px"><div class="fg"><label>Data da entrevista *</label><input type="date" id="mse-data" value="${new Date().toISOString().slice(0,10)}"></div><div class="fg"><label>Modalidade</label><select id="mse-modal"><option>Presencial</option><option>Telefone</option><option>Vídeo (Teams/Meet)</option><option>WhatsApp</option></select></div></div>
+    <div class="g2" style="margin-bottom:10px"><div class="fg"><label>Entrevistador *</label><input type="text" id="mse-resp" placeholder="Nome do entrevistador"></div><div class="fg"><label>Resultado *</label><select id="mse-resultado"><option value="">—</option><option value="Aprovado">Aprovado</option><option value="Aprovado com ressalvas">Aprovado com ressalvas</option><option value="Aguardando 2ª entrevista">Aguardando 2ª entrevista</option><option value="Reprovado">Reprovado</option></select></div></div>`;
+  } else if(tipo==='avaliacao'){
+    el.innerHTML=`<div class="g2" style="margin-bottom:10px"><div class="fg"><label>Tipo de avaliação</label><input type="text" id="mse-tipo-aval" placeholder="Ex: Prático, Teórico, Dinâmica..."></div><div class="fg"><label>Data</label><input type="date" id="mse-data" value="${new Date().toISOString().slice(0,10)}"></div></div>
+    <div class="fg" style="margin-bottom:10px"><label>Resultado</label><select id="mse-resultado"><option value="">—</option><option value="Aprovado">Aprovado</option><option value="Aprovado com ressalvas">Aprovado com ressalvas</option><option value="Reprovado">Reprovado</option></select></div>`;
+  } else if(tipo==='proposta'){
+    el.innerHTML=`<div class="g2" style="margin-bottom:10px"><div class="fg"><label>Valor proposto</label><input type="text" id="mse-valor" placeholder="R$ 0.000,00"></div><div class="fg"><label>Data</label><input type="date" id="mse-data" value="${new Date().toISOString().slice(0,10)}"></div></div>
+    <div class="fg" style="margin-bottom:10px"><label>Resposta do candidato</label><select id="mse-resultado"><option value="">Aguardando</option><option value="Aceito">Aceito</option><option value="Recusado">Recusado</option><option value="Negociando">Negociando</option></select></div>`;
+  } else {
+    el.innerHTML=`<div class="fg" style="margin-bottom:10px"><label>Data</label><input type="date" id="mse-data" value="${new Date().toISOString().slice(0,10)}"></div>`;
+  }
+};
+
+window.abrirModalEvento = function(candId){
+  selCandId = candId;
+  document.getElementById('mse-tipo').selectedIndex=0;
+  document.getElementById('mse-campos').innerHTML='';
+  document.getElementById('mse-obs').value='';
+  openModal('modal-sel-evento');
+};
+
+window.salvarEvento = async function(){
+  if(!selCandId) return;
+  const tipo = document.getElementById('mse-tipo').value;
+  if(!tipo){toast('Selecione o tipo de evento.','er');return;}
+  const obs = document.getElementById('mse-obs').value.trim();
+  const data = document.getElementById('mse-data')?.value||new Date().toISOString().slice(0,10);
+  const resultado = document.getElementById('mse-resultado')?.value||'';
+  const resp = document.getElementById('mse-resp')?.value||'';
+  const modal = document.getElementById('mse-modal')?.value||'';
+  const tipoAval = document.getElementById('mse-tipo-aval')?.value||'';
+  const valor = document.getElementById('mse-valor')?.value||'';
+
+  const evento = {
+    tipo, data, resultado, resp, modal, tipoAval, valor, obs,
+    criadoEm: new Date().toISOString(),
+    criadoPor: CU?.email||''
+  };
+  // Remover campos vazios
+  Object.keys(evento).forEach(k=>{if(evento[k]==='')delete evento[k];});
+
+  // Calcular novo status do candidato
+  let novoStatus = 'processo';
+  let novoSelStatus = 'triagem';
+  if(tipo==='triagem'){
+    if(resultado==='Reprovado') novoSelStatus='reprovado';
+    else if(resultado==='Mantido no banco'){novoStatus='disponivel';novoSelStatus='triagem';}
+    else novoSelStatus='entrevista';
+  } else if(tipo==='entrevista'){
+    if(resultado==='Reprovado') novoSelStatus='reprovado';
+    else if(resultado==='Aprovado') novoSelStatus='proposta';
+    else novoSelStatus='entrevista';
+  } else if(tipo==='avaliacao'){
+    if(resultado==='Reprovado') novoSelStatus='reprovado';
+    else novoSelStatus='avaliacao';
+  } else if(tipo==='proposta'){
+    if(resultado==='Aceito'){novoSelStatus='aprovado';novoStatus='contratado';}
+    else if(resultado==='Recusado') novoSelStatus='reprovado';
+    else novoSelStatus='proposta';
+  }
+
+  try{
+    const cand = candidatos.find(c=>c.id===selCandId);
+    const eventosAtuais = cand?.selecao||[];
+    await updateDoc(doc(db,'candidatos',selCandId),{
+      selecao:[...eventosAtuais, evento],
+      selecaoStatus: novoSelStatus,
+      status: novoStatus,
+      atualizadoEm: new Date().toISOString()
+    });
+    closeModal('modal-sel-evento');
+    toast('Evento registrado!','ok');
+    // Reabrir ficha atualizada
+    setTimeout(()=>abrirCand(selCandId), 400);
+  }catch(e){toast('Erro: '+e.message,'er');}
+};
+
+window.excluirEvento = async function(candId, idx){
+  if(!confirm('Excluir este evento?')) return;
+  const cand = candidatos.find(c=>c.id===candId);
+  if(!cand) return;
+  const eventos = [...(cand.selecao||[])];
+  eventos.splice(idx,1);
+  // Recalcular status
+  const ultEvento = eventos[eventos.length-1];
+  try{
+    await updateDoc(doc(db,'candidatos',candId),{
+      selecao: eventos,
+      selecaoStatus: ultEvento ? (ultEvento.tipo==='triagem'?'triagem':ultEvento.tipo==='entrevista'?'entrevista':ultEvento.tipo==='avaliacao'?'avaliacao':ultEvento.tipo==='proposta'?'proposta':'triagem') : 'triagem',
+      atualizadoEm: new Date().toISOString()
+    });
+    toast('Evento excluído!','ok');
+    setTimeout(()=>abrirCand(candId), 400);
+  }catch(e){toast('Erro: '+e.message,'er');}
 };
 
 window.limparFiltros=function(){
