@@ -1572,11 +1572,8 @@ window.vincularCandidato = function(vagaId){
   if(found.length===1){
     window.fazerVinculo(vagaId,found[0].id,found[0].nome);
   } else {
-    const escolha=prompt('Encontrados:
-'+found.map((c,i)=>`${i+1}. ${c.nome} — ${c.cargo}`).join('
-')+'
-
-Digite o número:');
+    const lista=found.map((c,i)=>`${i+1}. ${c.nome} — ${c.cargo}`).join('\n');
+    const escolha=prompt('Encontrados:\n'+lista+'\n\nDigite o número:');
     const idx=parseInt(escolha)-1;
     if(idx>=0&&idx<found.length) window.fazerVinculo(vagaId,found[idx].id,found[idx].nome);
   }
