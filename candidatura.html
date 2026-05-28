@@ -167,14 +167,12 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
 
     <div class="card">
       <div class="card-ttl"><div class="card-dot"></div>Currículo <span style="font-size:13px;font-weight:400;color:var(--txt3)">(opcional)</span></div>
-      <p style="font-size:13px;color:var(--txt2);margin-bottom:.75rem">Se tiver currículo, cole o texto abaixo — os dados serão preenchidos automaticamente!</p>
-      <div class="fg">
-        <label>Texto do currículo <span class="opt">(opcional)</span></label>
-        <textarea id="cv-texto" rows="5" placeholder="Abra seu currículo, selecione todo o texto (Ctrl+A), copie (Ctrl+C) e cole aqui..." style="font-size:14px;resize:vertical"></textarea>
-        <span class="hint">Cole o texto do seu currículo e clique em "Preencher automaticamente"</span>
+      <p style="font-size:13px;color:var(--txt2);margin-bottom:.75rem">Se tiver um currículo, envie aqui. PDF ou Word.</p>
+      <div class="upload-box" id="box-cv">
+        <input type="file" accept=".pdf,.doc,.docx" onchange="handleFile(this,'cv','Currículo')">
+        <div class="upload-box-name">📄 Currículo</div>
+        <div class="upload-box-st" id="st-cv">PDF ou Word — toque para selecionar</div>
       </div>
-      <button type="button" class="btn btn-p" onclick="extrairCvPublico()" id="btn-extrair" style="width:100%">✨ Preencher automaticamente com IA</button>
-      <div id="cv-status" style="display:none;margin-top:.75rem;font-size:13px;text-align:center;padding:8px 12px;border-radius:var(--r)"></div>
     </div>
 
     <div class="btn-row">
