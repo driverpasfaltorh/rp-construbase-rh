@@ -207,19 +207,16 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
       </div>
       <div id="dup-aviso" class="dup-box"></div>
 
-      <!-- UPLOAD CURRÍCULO -->
+      <!-- CURRÍCULO IA -->
       <div class="card" style="background:var(--bbg);border-color:var(--blue);margin-bottom:1.25rem">
-        <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">
-          <div style="flex:1">
-            <div style="font-size:13px;font-weight:500;color:var(--btxt);margin-bottom:3px">✨ Preencher com currículo (IA)</div>
-            <div style="font-size:12px;color:var(--btxt);opacity:.8">Faça upload de um currículo PDF e os campos serão preenchidos automaticamente</div>
-          </div>
-          <div style="position:relative;flex-shrink:0">
-            <input type="file" accept=".pdf" id="cv-rh-input" style="position:absolute;inset:0;opacity:0;cursor:pointer;width:100%;height:100%" onchange="uploadCvRH(this)">
-            <button class="btn btn-p btn-sm" id="btn-cv-rh">📄 Selecionar currículo</button>
-          </div>
+        <div style="font-size:13px;font-weight:500;color:var(--btxt);margin-bottom:4px">✨ Preencher com currículo (IA)</div>
+        <div style="font-size:12px;color:var(--btxt);opacity:.8;margin-bottom:.75rem">Abra o PDF do currículo, selecione todo o texto (Ctrl+A), copie (Ctrl+C) e cole abaixo. A IA extrai os dados automaticamente.</div>
+        <textarea id="cv-texto" rows="5" placeholder="Cole aqui o texto do currículo..." style="font-size:13px;padding:8px 10px;border:1px solid var(--blue);border-radius:var(--r);width:100%;background:rgba(255,255,255,.7);color:var(--txt);resize:vertical"></textarea>
+        <div style="display:flex;gap:8px;margin-top:.5rem">
+          <button class="btn btn-p btn-sm" onclick="extrairCvRH()" id="btn-cv-rh" style="flex:1">✨ Extrair e preencher</button>
+          <button class="btn btn-sm" onclick="document.getElementById('cv-texto').value=''" style="flex-shrink:0">Limpar</button>
         </div>
-        <div id="cv-rh-status" style="display:none;margin-top:.75rem;font-size:13px;color:var(--btxt);text-align:center;padding:.5rem;background:rgba(255,255,255,.5);border-radius:var(--r)"></div>
+        <div id="cv-rh-status" style="display:none;margin-top:.5rem;font-size:12px;text-align:center;padding:6px 10px;border-radius:var(--r)"></div>
       </div>
 
       <div class="sec-hdr"><div class="sd db">1</div><span class="sec-lbl">Identificação</span></div>
@@ -980,85 +977,109 @@ window.criarUsuario=async function(){
 };
 
 // UTILS
-window.uploadCvRH = function(input){
-  const file = input.files[0]; if(!file) return;
-  if(file.size > 10*1024*1024){toast('Arquivo muito grande. Máximo 10MB.','er');return;}
+window.extrairCvRH = async function(){
+  const texto = document.getElementById('cv-texto')?.value.trim();
+  if(!texto || texto.length < 30){toast('Cole o texto do currículo antes de extrair.','er');return;}
   const btn = document.getElementById('btn-cv-rh');
   const status = document.getElementById('cv-rh-status');
-  btn.textContent = '⏳ Lendo currículo...'; btn.disabled = true;
-  status.style.display = 'block'; status.textContent = 'Analisando currículo com IA...';
-  const reader = new FileReader();
-  reader.onload = async function(e){
-    const base64 = e.target.result.split(',')[1];
-    const prompt = `Analise este currículo e extraia as informações no formato JSON abaixo. Se uma informação não existir, deixe como string vazia "". Retorne APENAS o JSON, sem texto adicional, sem markdown.
+  btn.textContent='⏳ Analisando...';btn.disabled=true;
+  status.style.display='block';status.style.background='var(--abg)';status.style.color='var(--atxt)';
+  status.textContent='Lendo currículo com IA...';
+  const prompt=`Analise este currículo e extraia as informações no formato JSON abaixo. Se uma informação não existir, deixe como string vazia "". Retorne APENAS o JSON válido, sem texto adicional, sem markdown, sem blocos de código.
 
 {
   "nome": "nome completo",
   "tel": "telefone com DDD",
   "email": "email",
   "cidade": "cidade / UF",
+  "logr": "logradouro se mencionado",
+  "nasc": "data de nascimento em formato YYYY-MM-DD se mencionada",
+  "ecivil": "estado civil se mencionado",
   "cargo": "cargo ou área de atuação principal",
-  "inst": "grau de instrução",
-  "exp": "tempo de experiência (ex: 5 a 10 anos)",
+  "inst": "grau de instrução (ex: Médio completo, Superior completo)",
+  "exp": "tempo de experiência estimado (ex: 2 a 5 anos, Mais de 10 anos)",
   "sal": "pretensão salarial se mencionada",
-  "cnh": "categoria CNH se mencionada (A,B,C,D,E)",
+  "cnh": "categoria da CNH se mencionada (ex: B, C, E)",
   "trajetoria": "resumo profissional em 2-3 linhas",
-  "rg": "número do RG se mencionado",
+  "rg": "RG se mencionado",
   "pis": "PIS/PASEP se mencionado",
   "mae": "nome da mãe se mencionado",
-  "natmun": "cidade de nascimento se mencionada",
-  "experiencias": [{"empresa":"","cargo":"","de":"mm/aaaa","ate":"mm/aaaa ou atual","vinculo":"CLT ou PJ","motivo":"","desc":"atividades principais"}],
-  "formacoes": [{"nome":"curso","inst":"instituição","ano":"ano"}]
-}`;
-    try {
-      const res = await fetch('https://api.anthropic.com/v1/messages', {
-        method: 'POST',
-        headers: {'Content-Type':'application/json'},
-        body: JSON.stringify({
-          model: 'claude-sonnet-4-20250514',
-          max_tokens: 1500,
-          messages: [{role:'user', content:[
-            {type:'document', source:{type:'base64', media_type:'application/pdf', data: base64}},
-            {type:'text', text: prompt}
-          ]}]
-        })
-      });
-      const data = await res.json();
-      const texto = data.content?.[0]?.text || '';
-      const jsonMatch = texto.match(/\{[\s\S]*\}/);
-      if(!jsonMatch) throw new Error('JSON não encontrado');
-      const d = JSON.parse(jsonMatch[0]);
-      // Preencher campos
-      const s=(id,val)=>{const el=document.getElementById(id);if(el&&val&&!el.value)el.value=val;};
-      s('c-nome',d.nome);s('c-tel',d.tel);s('c-email',d.email);s('c-cidade',d.cidade);
-      s('c-rg',d.rg);s('c-pis',d.pis);s('c-mae',d.mae);s('c-natmun',d.natmun);
-      s('c-sal',d.sal);s('c-traj',d.trajetoria);s('c-exp',d.exp);s('c-inst',d.inst);
-      // Cargo
-      if(d.cargo){const sel=document.getElementById('c-cargo');if(sel){const opt=Array.from(sel.options).find(o=>o.value.toLowerCase().includes(d.cargo.toLowerCase().split(' ')[0].toLowerCase()));if(opt){sel.value=opt.value;onCargoChange();}}}
-      // CNH
-      if(d.cnh){const sel=document.getElementById('c-cnh-tag');document.querySelectorAll('#t-cnh .tag').forEach(t=>{if(t.textContent===d.cnh.toUpperCase())t.classList.add('sel');});}
-      // Experiências
-      if(d.experiencias?.length){
-        expEntries=d.experiencias.map((e,i)=>({id:'erh'+Date.now()+i,emp:e.empresa,cargo:e.cargo,de:e.de,ate:e.ate,vinculo:e.vinculo,motivo:e.motivo,desc:e.desc}));
-        renderExps();
+  "natmun": "município de nascimento se mencionado",
+  "experiencias": [
+    {"empresa":"nome da empresa","cargo":"cargo ocupado","de":"mm/aaaa","ate":"mm/aaaa ou atual","vinculo":"CLT ou PJ","motivo":"motivo de saída se mencionado","desc":"atividades descritas"}
+  ],
+  "formacoes": [
+    {"nome":"nome do curso ou formação","inst":"instituição","ano":"ano ou período"}
+  ]
+}
+
+CURRÍCULO:
+${texto}`;
+  try{
+    const res=await fetch('https://api.anthropic.com/v1/messages',{
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({model:'claude-sonnet-4-20250514',max_tokens:1500,messages:[{role:'user',content:prompt}]})
+    });
+    const data=await res.json();
+    const resposta=data.content?.[0]?.text||'';
+    const jsonMatch=resposta.match(/\{[\s\S]*\}/);
+    if(!jsonMatch) throw new Error('JSON não encontrado na resposta');
+    const d=JSON.parse(jsonMatch[0]);
+    // Preencher campos — só preenche se estiver vazio
+    const s=(id,val)=>{const el=document.getElementById(id);if(el&&val&&!el.value)el.value=val;};
+    s('c-nome',d.nome);s('c-tel',d.tel);s('c-email',d.email);s('c-cidade',d.cidade);
+    s('c-logr',d.logr);s('c-nasc',d.nasc);s('c-rg',d.rg);s('c-pis',d.pis);
+    s('c-mae',d.mae);s('c-natmun',d.natmun);s('c-sal',d.sal);s('c-traj',d.trajetoria);
+    // Selects
+    const setSelect=(id,val,partial=false)=>{
+      if(!val)return;const sel=document.getElementById(id);if(!sel)return;
+      const opts=Array.from(sel.options);
+      const match=partial?opts.find(o=>o.text.toLowerCase().includes(val.toLowerCase().split(' ')[0])):opts.find(o=>o.text.toLowerCase()===val.toLowerCase()||o.value.toLowerCase()===val.toLowerCase());
+      if(match&&!sel.value)sel.value=match.value;
+    };
+    setSelect('c-ecivil',d.ecivil);
+    setSelect('c-inst',d.inst,true);
+    setSelect('c-exp',d.exp,true);
+    // Cargo
+    if(d.cargo){
+      const sel=document.getElementById('c-cargo');if(sel&&!sel.value){
+        const opts=Array.from(sel.options);
+        const palavras=d.cargo.toLowerCase().split(' ');
+        const match=opts.find(o=>palavras.some(p=>p.length>3&&o.value.toLowerCase().includes(p)));
+        if(match){sel.value=match.value;onCargoChange();}
       }
-      // Formações
-      if(d.formacoes?.length){
-        formEntries=d.formacoes.map((f,i)=>({id:'frh'+Date.now()+i,nome:f.nome,inst:f.inst,ano:f.ano}));
-        renderForms();
-      }
-      status.style.display='block';
-      status.style.background='var(--gbg)';status.style.color='var(--gtxt)';
-      status.textContent='✅ Dados extraídos! Revise e complete as informações.';
-      btn.textContent='✅ Currículo lido';btn.disabled=false;
-      toast('Currículo lido com sucesso!','ok');
-    } catch(err){
-      status.textContent='⚠️ Não foi possível extrair os dados. Preencha manualmente.';
-      btn.textContent='📄 Tentar outro arquivo';btn.disabled=false;
-      console.error(err);
     }
-  };
-  reader.readAsDataURL(file);
+    // CNH — selecionar tag
+    if(d.cnh){
+      setTimeout(()=>{
+        document.querySelectorAll('#comp-tags-area .tag').forEach(t=>{
+          if(t.textContent.trim()===d.cnh.trim().toUpperCase()) t.classList.add('sel');
+        });
+      },300);
+    }
+    // Experiências
+    if(d.experiencias?.length){
+      expEntries=d.experiencias.filter(e=>e.empresa||e.cargo).map((e,i)=>({id:'erh'+Date.now()+i,emp:e.empresa,cargo:e.cargo,de:e.de,ate:e.ate,vinculo:e.vinculo,motivo:e.motivo,desc:e.desc}));
+      renderExps();
+    }
+    // Formações
+    if(d.formacoes?.length){
+      formEntries=d.formacoes.filter(f=>f.nome).map((f,i)=>({id:'frh'+Date.now()+i,nome:f.nome,inst:f.inst,ano:f.ano}));
+      renderForms();
+    }
+    status.style.background='var(--gbg)';status.style.color='var(--gtxt)';
+    status.textContent='✅ Dados extraídos com sucesso! Revise e complete as informações abaixo.';
+    btn.textContent='✅ Extraído';btn.disabled=false;
+    toast('Currículo lido com sucesso!','ok');
+    // Limpar campo de texto após extração
+    setTimeout(()=>{document.getElementById('cv-texto').value='';},1000);
+  }catch(err){
+    status.style.background='var(--rbg)';status.style.color='var(--rtxt)';
+    status.textContent='⚠️ Erro ao extrair dados. Verifique se o texto foi colado corretamente.';
+    btn.textContent='✨ Tentar novamente';btn.disabled=false;
+    console.error('Erro extração CV:',err);
+  }
 };
 
 window.limparFiltros=function(){
