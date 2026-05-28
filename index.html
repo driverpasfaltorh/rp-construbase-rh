@@ -647,7 +647,7 @@ function renderCands(){
   const origem=document.getElementById('fb-origem')?.value||'';
   const comp=(document.getElementById('fb-comp')?.value||'').toLowerCase();
   let res=candidatos.filter(c=>{
-    if(busca&&!c.nome?.toLowerCase().includes(busca)&&!c.cargo?.toLowerCase().includes(busca)&&!(c.cpf&&c.cpf.includes(busca)))return false;
+    if(busca&&!c.nome?.toLowerCase().includes(busca)&&!c.cargo?.toLowerCase().includes(busca)&&!(c.cpf&&c.cpf.includes(busca))&&!(c.apelido?.toLowerCase().includes(busca))&&!(c.cidade?.toLowerCase().includes(busca)))return false;
     if(cargo&&c.cargo!==cargo)return false;if(status&&c.status!==status)return false;if(origem&&c.origem!==origem)return false;
     if(comp){const all=(c.competencias||[]).map(t=>t.toLowerCase());if(!all.some(t=>t.includes(comp)))return false;}
     return true;
