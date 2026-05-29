@@ -280,7 +280,16 @@ async function init(){
       ];
     }
     renderSlots();
-  }catch(e){showErr();}
+  }catch(e){
+    console.error('Erro ao carregar candidato:',e);
+    // Se for erro de permissão, mostrar mensagem diferente
+    const errScreen=document.getElementById('err-screen');
+    if(errScreen){
+      errScreen.innerHTML='<div style="font-size:48px;margin-bottom:1rem">⚠️</div><div style="font-size:18px;font-weight:500;margin-bottom:.5rem">Erro ao carregar</div><div style="font-size:14px;color:var(--txt2)">Não foi possível carregar seus dados. Tente novamente em instantes ou entre em contato com o RH.</div>';
+      errScreen.style.display='block';
+    }
+    document.getElementById('main').style.display='none';
+  }
 }
 
 function preencherCampos(){
