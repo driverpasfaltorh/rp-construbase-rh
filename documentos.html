@@ -231,16 +231,54 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
   </div>
 </div>
 
-<script type="module">
-import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
-import { getFirestore, collection, doc, getDoc, getDocs, updateDoc } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+<script>
+const FC_PROJECT='rp-construbase-rh';
+const FC_KEY='AIzaSyBAaXDcUgYFjZO3JiiXl5JVpvlybPO7p7A';
+const FS_BASE='https://firestore.googleapis.com/v1/projects/'+FC_PROJECT+'/databases/(default)/documents';
+const PROXY_DRIVE='https://script.google.com/macros/s/AKfycbwFGla8cxxxo2HKGMyEA3BpYxitcYiWy6kqwFzv9jcme7-kVw_BNb7PvXRTCmeqta0soA/exec';
+let candId=null,candData=null,docsConfig=[],uploadedFiles={};
 
-const FC={apiKey:"AIzaSyBAaXDcUgYFjZO3JiiXl5JVpvlybPO7p7A",authDomain:"rp-construbase-rh.firebaseapp.com",projectId:"rp-construbase-rh",storageBucket:"rp-construbase-rh.firebasestorage.app",messagingSenderId:"420511174774",appId:"1:420511174774:web:c2b6ec88346386cad9cf57"};
-const app=initializeApp(FC);
-const db=getFirestore(app);
-
-const PROXY_DRIVE = 'https://script.google.com/macros/s/AKfycbwFGla8cxxxo2HKGMyEA3BpYxitcYiWy6kqwFzv9jcme7-kVw_BNb7PvXRTCmeqta0soA/exec';
-let candId=null, candData=null, docsConfig=[], uploadedFiles={};
+async function fsGet(col,id){
+  const r=await fetch(FS_BASE+'/'+col+'/'+id+'?key='+FC_KEY);
+  if(!r.ok)throw new Error('not found');
+  const d=await r.json();
+  return {exists:()=>!!d.fields,data:()=>fsParse(d.fields)};
+}
+async function fsGetList(col){
+  const r=await fetch(FS_BASE+'/'+col+'?key='+FC_KEY+'&pageSize=200');
+  const d=await r.json();
+  return(d.documents||[]).map(x=>({id:x.name.split('/').pop(),...fsParse(x.fields)}));
+}
+async function fsUpdate(col,id,obj){
+  const fields=fsSerial(obj);
+  const mask=Object.keys(fields).map(k=>'updateMask.fieldPaths='+encodeURIComponent(k)).join('&');
+  const r=await fetch(FS_BASE+'/'+col+'/'+id+'?key='+FC_KEY+'&'+mask,{method:'PATCH',headers:{'Content-Type':'application/json'},body:JSON.stringify({fields})});
+  if(!r.ok)throw new Error('Erro ao salvar');
+}
+function fsParse(f){
+  if(!f)return{};
+  const o={};
+  for(const[k,v]of Object.entries(f)){
+    if(v.stringValue!==undefined)o[k]=v.stringValue;
+    else if(v.booleanValue!==undefined)o[k]=v.booleanValue;
+    else if(v.integerValue!==undefined)o[k]=parseInt(v.integerValue);
+    else if(v.arrayValue!==undefined)o[k]=(v.arrayValue.values||[]).map(i=>i.stringValue||'');
+    else if(v.mapValue!==undefined)o[k]=fsParse(v.mapValue.fields);
+  }
+  return o;
+}
+function fsSerial(obj){
+  const f={};
+  for(const[k,v]of Object.entries(obj)){
+    if(v===null||v===undefined)continue;
+    else if(typeof v==='boolean')f[k]={booleanValue:v};
+    else if(typeof v==='number')f[k]={integerValue:String(v)};
+    else if(Array.isArray(v))f[k]={arrayValue:{values:v.map(i=>({'stringValue':String(i)})) }};
+    else if(typeof v==='object')f[k]={mapValue:{fields:fsSerial(v)}};
+    else f[k]={stringValue:String(v)};
+  }
+  return f;
+}
 
 async function init(){
   const params=new URLSearchParams(window.location.search);
