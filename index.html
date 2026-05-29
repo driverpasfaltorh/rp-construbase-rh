@@ -1559,6 +1559,7 @@ window.abrirVaga = function(id){
       <button class="btn btn-sm" onclick="window.copiarLink('${v.linkCandidatura||BASE_URL+'/candidatura.html?vaga='+encodeURIComponent(v.cargo)}')">📋 Copiar link</button>
       <button class="btn btn-sm" onclick="window.editarVaga('${id}')">✏️ Editar vaga</button>
       <button class="btn btn-sm btn-d" onclick="window.encerrarVaga('${id}')">Encerrar vaga</button>
+      <button class="btn btn-sm btn-d" onclick="window.excluirVaga('${id}')">🗑 Excluir vaga</button>
     </div>
     ${(v.perguntas||[]).length?`<div style="margin-bottom:1rem"><div style="font-size:12px;font-weight:500;color:var(--txt2);margin-bottom:.5rem">PERGUNTAS DE PRÉ-SELEÇÃO</div>
     ${v.perguntas.map((p,i)=>`<div style="font-size:13px;padding:6px 0;border-bottom:0.5px solid var(--brd)"><span class="badge ${p.tipo==='eliminatoria'?'b-desc':'b-proc'}" style="margin-right:6px">${p.tipo==='eliminatoria'?'Eliminatória':'Classificatória'}</span>${p.txt}</div>`).join('')}</div>`:''}
@@ -1620,6 +1621,15 @@ window.editarVaga = function(id){
     s('mv-requisitos',v.requisitos);s('mv-beneficios',v.beneficios);s('mv-obs',v.obs);
     if(perguntasVaga.length) window.renderPerguntas();
   },100);
+};
+
+window.excluirVaga = async function(id){
+  if(!confirm('Excluir esta vaga permanentemente? Esta ação não pode ser desfeita.')) return;
+  try{
+    await deleteDoc(doc(db,'vagas',id));
+    closeModal('modal-vaga-det');
+    toast('Vaga excluída!','ok');
+  }catch(e){toast('Erro: '+e.message,'er');}
 };
 
 window.encerrarVaga = async function(id){
