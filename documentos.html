@@ -239,6 +239,7 @@ const FC={apiKey:"AIzaSyBAaXDcUgYFjZO3JiiXl5JVpvlybPO7p7A",authDomain:"rp-constr
 const app=initializeApp(FC);
 const db=getFirestore(app);
 
+const PROXY_DRIVE = 'https://script.google.com/macros/s/AKfycbwFGla8cxxxo2HKGMyEA3BpYxitcYiWy6kqwFzv9jcme7-kVw_BNb7PvXRTCmeqta0soA/exec';
 let candId=null, candData=null, docsConfig=[], uploadedFiles={};
 
 async function init(){
@@ -361,82 +362,73 @@ window.irTab=function(n,btn){
 };
 
 window.enviar=async function(){
-  // Validar docs obrigatórios
   const obrFalta=docsConfig.filter(d=>d.obrigatorio&&!uploadedFiles[d.id]);
   if(obrFalta.length>0){
-    obrFalta.forEach(d=>{const s=document.getElementById('slot-'+d.id);if(s){s.classList.add('falta');}});
-    alert(`Envie os documentos obrigatórios antes de continuar:\n\n${obrFalta.map(d=>'• '+d.nome).join('\n')}`);
+    obrFalta.forEach(d=>{const s=document.getElementById('slot-'+d.id);if(s)s.classList.add('falta');});
+    alert('Envie os documentos obrigatórios antes de continuar:\n\n'+obrFalta.map(d=>'• '+d.nome).join('\n'));
     setTimeout(()=>document.querySelector('.slot.falta')?.scrollIntoView({behavior:'smooth',block:'center'}),100);
     return;
   }
-
   const ov=document.getElementById('ov');
   ov.classList.add('show');
-  document.getElementById('ov-txt').textContent='Salvando seus dados...';
-
-  const g=id=>{const el=document.getElementById(id);return el?el.value.trim():''};
-
-  // Montar objeto com APENAS os campos não vazios (para não sobrescrever dados existentes)
-  const updates={};
-  const campos=[
-    ['rg','d-rg'],['rgorg','d-rgorg'],['pis','d-pis'],['mae','d-mae'],['pai','d-pai'],
-    ['natmun','d-natmun'],['natpais','d-natpais'],['pcd','d-pcd'],['pcdtipo','d-pcdt'],
-    ['cep','d-cep'],['logr','d-logr'],['num','d-num'],['comp','d-comp'],['bairro','d-bairro'],['cidade','d-cidade'],
-    ['banco','d-banco'],['agencia','d-agencia'],['conta','d-conta'],['pix','d-pix'],
-    ['camisa','d-camisa'],['calca','d-calca'],['calcado','d-calcado'],['oculos','d-oculos'],
-  ];
-  campos.forEach(([campo,elId])=>{
-    const val=g(elId);
-    // Só atualiza se o candidato preencheu algo novo (não estava já no cadastro)
-    if(val && val !== (candData[campo]||'')) updates[campo]=val;
-    // Ou se estava vazio e agora tem valor
-    else if(val && !candData[campo]) updates[campo]=val;
-  });
-
-  // Status dos documentos
-  const docsRecebidos=Object.keys(uploadedFiles);
-  const docsStatus={...(candData.docsStatus||{})};
-  docsConfig.forEach(d=>{
-    if(uploadedFiles[d.id]){
-      docsStatus[d.id]={recebido:true,nome:uploadedFiles[d.id].name,obrigatorio:d.obrigatorio,enviadoEm:new Date().toISOString()};
-    }
-  });
-
-  updates.docsRecebidos=[...new Set([...(candData.docsRecebidos||[]),...docsRecebidos])];
-  updates.docsStatus=docsStatus;
-  updates.docsEnviadoEm=new Date().toISOString();
-  updates.cadastroCompleto=true;
-  updates.atualizadoEm=new Date().toISOString();
-
+  document.getElementById('ov-txt').textContent='Enviando documentos...';
   try{
-    await updateDoc(doc(db,'candidatos',candId),updates);
+    // 1. Enviar arquivos para o Google Drive via proxy
+    const arquivos=Object.entries(uploadedFiles).map(([slotId,f])=>{
+      const ext=f.name.split('.').pop();
+      return {id:slotId,nome:f.label+'_'+candData.nome.replace(/\s+/g,'_')+'.'+ext,base64:f.base64,mimeType:f.mimeType};
+    });
+    let pastaId='';
+    try{
+      document.getElementById('ov-txt').textContent='Salvando no Google Drive...';
+      const resp=await fetch('https://script.google.com/macros/s/AKfycbwFGla8cxxxo2HKGMyEA3BpYxitcYiWy6kqwFzv9jcme7-kVw_BNb7PvXRTCmeqta0soA/exec',{
+        method:'POST',headers:{'Content-Type':'application/json'},
+        body:JSON.stringify({nomeCandidato:candData.nome,arquivos})
+      });
+      const res=await resp.json();
+      if(res.sucesso) pastaId=res.pastaId;
+      else console.error('Drive:',res.erro);
+    }catch(de){console.error('Erro Drive:',de);}
+
+    // 2. Coletar dados complementares preenchidos
+    document.getElementById('ov-txt').textContent='Salvando dados...';
+    const g=id=>{const el=document.getElementById(id);return el?el.value.trim():''};
+    const campos={};
+    [['rg','d-rg'],['rgorg','d-rgorg'],['pis','d-pis'],['mae','d-mae'],['pai','d-pai'],
+     ['natmun','d-natmun'],['natpais','d-natpais'],['pcd','d-pcd'],['pcdtipo','d-pcdt'],
+     ['cep','d-cep'],['logr','d-logr'],['num','d-num'],['comp','d-comp'],['bairro','d-bairro'],['cidade','d-cidade'],
+     ['banco','d-banco'],['agencia','d-agencia'],['conta','d-conta'],['pix','d-pix'],
+     ['camisa','d-camisa'],['calca','d-calca'],['calcado','d-calcado'],['oculos','d-oculos']
+    ].forEach(([campo,elId])=>{
+      const val=g(elId);
+      if(val&&val!==(candData[campo]||'')) campos[campo]=val;
+      else if(val&&!candData[campo]) campos[campo]=val;
+    });
+
+    // 3. Registrar no Firestore
+    const docsRecebidos=Object.keys(uploadedFiles);
+    const docsStatus={...(candData.docsStatus||{})};
+    docsConfig.forEach(d=>{
+      if(uploadedFiles[d.id]) docsStatus[d.id]={recebido:true,nome:uploadedFiles[d.id].label,obrigatorio:d.obrigatorio,enviadoEm:new Date().toISOString()};
+    });
+    await updateDoc(doc(db,'candidatos',candId),{
+      ...campos,
+      docsRecebidos:[...new Set([...(candData.docsRecebidos||[]),...docsRecebidos])],
+      docsStatus,drivePastaId:pastaId,
+      docsEnviadoEm:new Date().toISOString(),
+      cadastroCompleto:true,status:'processo',
+      atualizadoEm:new Date().toISOString()
+    });
     ov.classList.remove('show');
     document.getElementById('main').style.display='none';
     document.getElementById('suc').style.display='block';
     window.scrollTo({top:0,behavior:'smooth'});
   }catch(e){
     ov.classList.remove('show');
-    alert('Erro ao salvar: '+e.message+'\n\nTente novamente.');
+    alert('Erro ao enviar: '+e.message+'\n\nTente novamente.');
   }
 };
 
-// MASKS
-window.mPIS=function(el){let v=el.value.replace(/\D/g,'').slice(0,11);if(v.length>9)v=v.replace(/(\d{3})(\d{5})(\d{2})(\d)/,'$1.$2.$3-$4');else if(v.length>7)v=v.replace(/(\d{3})(\d{5})(\d)/,'$1.$2.$3');else if(v.length>3)v=v.replace(/(\d{3})(\d)/,'$1.$2');el.value=v;};
-window.mCEP=function(el){let v=el.value.replace(/\D/g,'').slice(0,8);if(v.length>5)v=v.replace(/(\d{5})(\d)/,'$1-$2');el.value=v;};
-window.tPCD=function(){document.getElementById('d-pcdtw').style.display=document.getElementById('d-pcd').value==='sim'?'flex':'none';};
-window.bCEP=async function(){
-  const cep=document.getElementById('d-cep').value.replace(/\D/g,'');
-  const h=document.getElementById('cep-h');
-  if(cep.length!==8){h.textContent='CEP inválido';return;}h.textContent='Buscando...';
-  try{
-    const r=await fetch(`https://viacep.com.br/ws/${cep}/json/`);const d=await r.json();
-    if(d.erro){h.textContent='CEP não encontrado';return;}
-    document.getElementById('d-logr').value=d.logradouro||'';
-    document.getElementById('d-bairro').value=d.bairro||'';
-    document.getElementById('d-cidade').value=(d.localidade||'')+(d.uf?' / '+d.uf:'');
-    h.textContent='✓ Preenchido';h.style.color='var(--gtxt)';
-  }catch(e){h.textContent='Erro ao buscar CEP';}
-};
 
 function showErr(){
   document.getElementById('main').style.display='none';
