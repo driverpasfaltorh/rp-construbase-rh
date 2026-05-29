@@ -247,7 +247,7 @@ async function init(){
   candId=params.get('cid');
   if(!candId){showErr();return;}
   try{
-    const snap=await getDoc(doc(db,'candidatos',candId));
+    const snap=await fsGetDoc('candidatos',candId);
     if(!snap.exists()){showErr();return;}
     candData=snap.data();
 
@@ -261,8 +261,8 @@ async function init(){
 
     // Carregar config de documentos
     try{
-      const docSnap=await getDocs(collection(db,'documentos'));
-      docsConfig=docSnap.docs.map(d=>({id:d.id,...d.data()})).sort((a,b)=>(a.ordem||99)-(b.ordem||99));
+      const docSnap=await fsGetDocs('documentos');
+      docsConfig=docSnap.sort((a,b)=>(a.ordem||99)-(b.ordem||99));
     }catch(e){}
     if(docsConfig.length===0){
       docsConfig=[
@@ -420,7 +420,7 @@ window.enviar=async function(){
     docsConfig.forEach(d=>{
       if(uploadedFiles[d.id]) docsStatus[d.id]={recebido:true,nome:uploadedFiles[d.id].label,obrigatorio:d.obrigatorio,enviadoEm:new Date().toISOString()};
     });
-    await updateDoc(doc(db,'candidatos',candId),{
+    await fsUpdateDoc('candidatos',candId,{
       ...campos,
       docsRecebidos:[...new Set([...(candData.docsRecebidos||[]),...docsRecebidos])],
       docsStatus,drivePastaId:pastaId,
