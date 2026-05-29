@@ -1034,10 +1034,20 @@ window.abrirAdm=function(id){
     <div style="display:flex;gap:8px;margin-bottom:1rem;flex-wrap:wrap">
       ${c?`<button class="btn btn-sm" onclick="abrirCand('${c.id}')">Ver dados do candidato</button>`:''}
       <button class="btn btn-sm btn-s" onclick="gerarSST('${id}')">📧 Gerar ordem SST</button>
+      <button class="btn btn-sm btn-d" onclick="window.excluirAdmissao('${id}')">🗑 Excluir checklist</button>
     </div>
     ${STEPS.map(s=>{const sd=s.itens.filter(i=>a.checks&&a.checks[i.id]).length;
     return`<div class="cl-sec"><div class="cl-sec-hdr"><span style="font-size:13px;font-weight:500;flex:1">${s.label}</span><span style="font-size:12px;color:var(--txt3)">${sd}/${s.itens.length}</span></div>
     ${s.itens.map(item=>{const chk=a.checks&&a.checks[item.id];return`<div class="cl-item"><input type="checkbox" class="cb" ${chk?'checked':''} onchange="toggleCheck('${id}','${item.id}',this.checked)"><span class="cl-lbl ${chk?'done':''}">${item.label}</span></div>`;}).join('')}</div>`;}).join('')}`;
+};
+
+window.excluirAdmissao = async function(id){
+  if(!confirm('Excluir este checklist de admissão permanentemente? Esta ação não pode ser desfeita.')) return;
+  try{
+    await deleteDoc(doc(db,'admissoes',id));
+    voltarAdms();
+    toast('Checklist excluído!','ok');
+  }catch(e){toast('Erro: '+e.message,'er');}
 };
 
 window.voltarAdms=function(){document.getElementById('adm-lista-v').style.display='block';document.getElementById('adm-det-v').style.display='none';};
