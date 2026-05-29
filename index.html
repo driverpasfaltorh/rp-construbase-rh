@@ -1679,15 +1679,16 @@ window.renderSelecao = function(){
     const ultEvento = eventos[eventos.length-1];
     const stLabel = SEL_STATUS[c.selecaoStatus||'triagem']||'Em triagem';
     const stBadge = SEL_STATUS_BADGE[c.selecaoStatus||'triagem']||'b-and';
-    return `<div class="card card-c" onclick="abrirFichaSelecao('${c.id}')">
+    return `<div class="card">
       <div class="card-top">
-        <div>
+        <div style="cursor:pointer;flex:1" onclick="abrirFichaSelecao('${c.id}')">
           <div class="card-name">${c.nome}</div>
           <div class="card-sub">${c.cargo} · ${c.cidade||'—'}</div>
         </div>
         <div style="display:flex;flex-direction:column;align-items:flex-end;gap:4px">
           <span class="badge ${stBadge}">${stLabel}</span>
           ${eventos.length?`<span style="font-size:11px;color:var(--txt3)">${eventos.length} evento${eventos.length>1?'s':''}</span>`:''}
+          <button class="btn btn-sm btn-d" style="font-size:11px;padding:2px 8px" onclick="window.removerDoProcesso('${c.id}')">Remover</button>
         </div>
       </div>
       ${ultEvento?`<div style="font-size:12px;color:var(--txt2);margin-top:6px;padding-top:6px;border-top:0.5px solid var(--brd)">
@@ -1698,6 +1699,19 @@ window.renderSelecao = function(){
       </div>`:''}
     </div>`;
   }).join('');
+};
+
+window.removerDoProcesso = async function(candId){
+  if(!confirm('Remover este candidato do processo seletivo? O histórico de eventos será apagado.')) return;
+  try{
+    await updateDoc(doc(db,'candidatos',candId),{
+      selecao:[],
+      selecaoStatus:'',
+      status:'disponivel',
+      atualizadoEm:new Date().toISOString()
+    });
+    toast('Candidato removido do processo seletivo.','ok');
+  }catch(e){toast('Erro: '+e.message,'er');}
 };
 
 window.abrirFichaSelecao = function(id){
