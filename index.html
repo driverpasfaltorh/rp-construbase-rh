@@ -1511,8 +1511,17 @@ window.salvarVaga = async function(){
     atualizadoEm:new Date().toISOString(),
   };
   try{
-    if(vagaEditId){await setDoc(doc(db,'vagas',vagaEditId),{...data,criadoEm:(vagas.find(v=>v.id===vagaEditId)?.criadoEm||new Date().toISOString())});toast('Vaga atualizada!','ok');}
-    else{data.criadoEm=new Date().toISOString();data.criadoPor=CU?.email;await addDoc(collection(db,'vagas'),data);toast('Vaga criada!','ok');}
+    if(vagaEditId){
+      const vagaAtual=vagas.find(v=>v.id===vagaEditId)||{};
+      await setDoc(doc(db,'vagas',vagaEditId),{...data,criadoEm:vagaAtual.criadoEm||new Date().toISOString(),criadoPor:vagaAtual.criadoPor||CU?.email});
+      toast('Vaga atualizada!','ok');
+    } else {
+      data.criadoEm=new Date().toISOString();
+      data.criadoPor=CU?.email;
+      await addDoc(collection(db,'vagas'),data);
+      toast('Vaga criada!','ok');
+    }
+    vagaEditId=null;
     closeModal('modal-vaga');
   }catch(e){toast('Erro: '+e.message,'er');}
 };
