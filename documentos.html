@@ -483,7 +483,7 @@ window.enviar=async function(){
     try{
       document.getElementById('ov-txt').textContent='Salvando no Google Drive...';
       const resp=await fetch('https://script.google.com/macros/s/AKfycbwFGla8cxxxo2HKGMyEA3BpYxitcYiWy6kqwFzv9jcme7-kVw_BNb7PvXRTCmeqta0soA/exec',{
-        method:'POST',headers:{'Content-Type':'application/json'},
+        method:'POST',headers:{'Content-Type':'text/plain'},
         body:JSON.stringify({nomeCandidato:candData.nome,arquivos})
       });
       const res=await resp.json();
