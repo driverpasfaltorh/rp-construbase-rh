@@ -330,6 +330,11 @@ async function init(){
   }
 }
 
+function tPCD(){
+  const v=document.getElementById('d-pcd').value;
+  document.getElementById('d-pcdtw').style.display=(v==='sim')?'block':'none';
+}
+
 function preencherCampos(){
   const c=candData;
   const set=(id,val)=>{const el=document.getElementById(id);if(!el||!val)return;el.value=val;el.classList.add('ja-tem');const fg=el.closest('.fg');if(fg){let hint=fg.querySelector('.preenchido');if(!hint){hint=document.createElement('span');hint.className='preenchido';fg.appendChild(hint);}hint.textContent='🟢 Já preenchido na candidatura';}};
