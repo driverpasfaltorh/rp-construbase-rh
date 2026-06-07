@@ -904,7 +904,6 @@ window.abrirCand=async function(id){
       const d=await resp.json();
       const parse=f=>{if(!f)return{};const o={};for(const[k,v]of Object.entries(f)){if(v.stringValue!==undefined)o[k]=v.stringValue;else if(v.booleanValue!==undefined)o[k]=v.booleanValue;else if(v.integerValue!==undefined)o[k]=parseInt(v.integerValue);else if(v.arrayValue!==undefined)o[k]=(v.arrayValue.values||[]).map(i=>i.stringValue||'');else if(v.mapValue!==undefined)o[k]=parse(v.mapValue.fields);}return o;};
       c={id,...parse(d.fields)};
-      console.log('docsRecebidos:', c.docsRecebidos, 'docsStatus:', c.docsStatus);
     }else{
       const err=await resp.text();
       console.warn('REST falhou:', resp.status, err);
