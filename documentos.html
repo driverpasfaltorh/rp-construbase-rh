@@ -330,6 +330,27 @@ async function init(){
   }
 }
 
+function mCEP(el){
+  let v=el.value.replace(/\D/g,'');
+  if(v.length>5)v=v.slice(0,5)+'-'+v.slice(5,8);
+  el.value=v;
+}
+async function bCEP(){
+  const cep=document.getElementById('d-cep').value.replace(/\D/g,'');
+  const hint=document.getElementById('cep-h');
+  if(cep.length!==8){hint.textContent='CEP inválido.';hint.style.color='var(--red)';return;}
+  hint.textContent='Buscando...';hint.style.color='var(--txt3)';
+  try{
+    const r=await fetch('https://viacep.com.br/ws/'+cep+'/json/');
+    const d=await r.json();
+    if(d.erro){hint.textContent='CEP não encontrado.';hint.style.color='var(--red)';return;}
+    const set=(id,val)=>{const el=document.getElementById(id);if(el&&val){el.value=val;el.classList.add('ja-tem');}};
+    set('d-logr',d.logradouro);set('d-bairro',d.bairro);set('d-cidade',d.localidade);
+    hint.textContent='✓ Endereço preenchido automaticamente.';hint.style.color='var(--green)';
+    document.getElementById('d-num').focus();
+  }catch(e){hint.textContent='Erro ao buscar CEP. Verifique sua conexão.';hint.style.color='var(--red)';}
+}
+
 function tPCD(){
   const v=document.getElementById('d-pcd').value;
   document.getElementById('d-pcdtw').style.display=(v==='sim')?'block':'none';
@@ -463,7 +484,7 @@ window.enviar=async function(){
     docsConfig.forEach(d=>{
       if(uploadedFiles[d.id]) docsStatus[d.id]={recebido:true,nome:uploadedFiles[d.id].label,obrigatorio:d.obrigatorio,enviadoEm:new Date().toISOString()};
     });
-    await fsUpdateDoc('candidatos',candId,{
+    await fsUpdate('candidatos',candId,{
       ...campos,
       docsRecebidos:[...new Set([...(candData.docsRecebidos||[]),...docsRecebidos])],
       docsStatus,drivePastaId:pastaId,
