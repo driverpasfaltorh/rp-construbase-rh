@@ -1014,12 +1014,40 @@ window.criarAdm=async function(){
   }catch(e){toast('Erro: '+e.message,'er');}
 };
 
-window.abrirAdm=function(id){
+window.abrirAdm=async function(id){
   const a=admissoes.find(x=>x.id===id);if(!a)return;
   const p=progAdm(a);const st=stAdm(a);
-  const c=candidatos.find(x=>x.id===a.candidatoId);
+  // Reler candidato atualizado do Firestore
+  let c=candidatos.find(x=>x.id===a.candidatoId);
+  try{
+    const snap=await getDoc(doc(db,'candidatos',a.candidatoId));
+    if(snap.exists())c={id:snap.id,...snap.data()};
+  }catch(e){}
   document.getElementById('adm-lista-v').style.display='none';
   const dv=document.getElementById('adm-det-v');dv.style.display='block';
+  // Montar grid de documentos
+  const cfgDocs=cfg.documentos&&cfg.documentos.length?cfg.documentos:[
+    {id:'foto',nome:'Foto 3x4',obrigatorio:true},
+    {id:'rg',nome:'RG (frente e verso)',obrigatorio:true},
+    {id:'cpf',nome:'CPF',obrigatorio:true},
+    {id:'compresid',nome:'Comprovante de Residência',obrigatorio:true},
+    {id:'pis',nome:'PIS/PASEP',obrigatorio:false},
+    {id:'ctps',nome:'Carteira de Trabalho Digital',obrigatorio:true},
+    {id:'cnh',nome:'CNH',obrigatorio:false},
+    {id:'reservista',nome:'Reservista',obrigatorio:false},
+    {id:'casamento',nome:'Certidão de Casamento',obrigatorio:false},
+    {id:'filhos',nome:'Certidão de nascimento dos filhos',obrigatorio:false},
+    {id:'vacina',nome:'Carteira de vacinação filhos',obrigatorio:false},
+  ];
+  const docsHtml=cfgDocs.map(d=>{
+    const recebido=(c?.docsRecebidos||[]).includes(d.id)||(c?.docsStatus?.[d.id]?.recebido)||false;
+    const qtd=c?.docsStatus?.[d.id]?.qtd||0;
+    const cls=recebido?'ok':'pend';
+    const badge=recebido?`<span class="doc-st-badge doc-ok-b">Recebido${qtd>1?' ('+qtd+')':''}</span>`:d.obrigatorio?'<span class="doc-st-badge doc-pend-b">Faltando</span>':'<span class="doc-st-badge doc-opt-b">Opcional</span>';
+    return`<div class="doc-st-item ${recebido?'ok':d.obrigatorio?'pend':''}"><div class="doc-st-icon">${recebido?'✅':d.obrigatorio?'❌':'○'}</div><div class="doc-st-name">${d.nome}</div>${badge}</div>`;
+  }).join('');
+  const docsPendentes=cfgDocs.filter(d=>d.obrigatorio&&!(c?.docsRecebidos||[]).includes(d.id)&&!c?.docsStatus?.[d.id]?.recebido).length;
+  const linkDocs=c?`<a href="documentos.html?cid=${c.id}" target="_blank" class="btn btn-sm" style="text-decoration:none">🔗 Link documentos</a>`:'';
   dv.innerHTML=`<button class="btn btn-sm" onclick="voltarAdms()" style="margin-bottom:1rem">← Voltar</button>
     <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:1rem;flex-wrap:wrap;gap:8px">
       <div><div class="page-title" style="margin:0">${a.nome}</div>
@@ -1031,10 +1059,18 @@ window.abrirAdm=function(id){
       <div class="prog-wrap" style="height:10px"><div class="prog-bar" style="width:${p.pct}%"></div></div>
       <div class="prog-lbl"><span>${p.done} de ${p.total} etapas</span></div>
     </div>
-    <div style="display:flex;gap:8px;margin-bottom:1rem;flex-wrap:wrap">
+    <div style="gap:8px;margin-bottom:1rem;flex-wrap:wrap;display:flex">
       ${c?`<button class="btn btn-sm" onclick="abrirCand('${c.id}')">Ver dados do candidato</button>`:''}
+      ${linkDocs}
       <button class="btn btn-sm btn-s" onclick="gerarSST('${id}')">📧 Gerar ordem SST</button>
       <button class="btn btn-sm btn-d" onclick="window.excluirAdmissao('${id}')">🗑 Excluir checklist</button>
+    </div>
+    <div class="card" style="margin-bottom:1rem">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:.5rem">
+        <span style="font-size:13px;font-weight:500">Documentos para admissão</span>
+        <span style="font-size:12px;color:${docsPendentes>0?'var(--rtxt)':'var(--gtxt)'}">${docsPendentes>0?docsPendentes+' obrigatório(s) faltando':'✓ Todos os obrigatórios recebidos'}</span>
+      </div>
+      <div class="doc-status-grid">${docsHtml}</div>
     </div>
     ${STEPS.map(s=>{const sd=s.itens.filter(i=>a.checks&&a.checks[i.id]).length;
     return`<div class="cl-sec"><div class="cl-sec-hdr"><span style="font-size:13px;font-weight:500;flex:1">${s.label}</span><span style="font-size:12px;color:var(--txt3)">${sd}/${s.itens.length}</span></div>
