@@ -285,7 +285,7 @@ async function init(){
   candId=params.get('cid');
   if(!candId){showErr();return;}
   try{
-    const snap=await fsGetDoc('candidatos',candId);
+    const snap=await fsGet('candidatos',candId);
     if(!snap.exists()){showErr();return;}
     candData=snap.data();
 
