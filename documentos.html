@@ -238,7 +238,7 @@ const FS_BASE='https://firestore.googleapis.com/v1/projects/'+FC_PROJECT+'/datab
 const PROXY_DRIVE='https://script.google.com/macros/s/AKfycbwFGla8cxxxo2HKGMyEA3BpYxitcYiWy6kqwFzv9jcme7-kVw_BNb7PvXRTCmeqta0soA/exec';
 let candId=null,candData=null,docsConfig=[],uploadedFiles={};
 
-async function fsGet(col,id){
+async function fsGetDoc(col,id){
   const r=await fetch(FS_BASE+'/'+col+'/'+id+'?key='+FC_KEY);
   if(!r.ok)throw new Error('not found');
   const d=await r.json();
@@ -285,7 +285,7 @@ async function init(){
   candId=params.get('cid');
   if(!candId){showErr();return;}
   try{
-    const snap=await fsGet('candidatos',candId);
+    const snap=await fsGetDoc('candidatos',candId);
     if(!snap.exists()){showErr();return;}
     candData=snap.data();
 
