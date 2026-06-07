@@ -847,8 +847,22 @@ window.renderCands = function renderCands(){
   }).join(''):'<div class="empty">Nenhum candidato encontrado.</div>';
 }
 
-window.abrirCand=function(id){
-  const c=candidatos.find(x=>x.id===id);if(!c)return;
+window.abrirCand=async function(id){
+  let c=candidatos.find(x=>x.id===id);if(!c)return;
+  // Reler do Firestore para pegar docsStatus atualizado
+  try{
+    const proj='rp-construbase-rh';
+    const token=sessionStorage.getItem('fb_token');
+    const url=`https://firestore.googleapis.com/v1/projects/${proj}/databases/(default)/documents/candidatos/${id}`;
+    const headers={'Content-Type':'application/json'};
+    if(token)headers['Authorization']=`Bearer ${token}`;
+    const resp=await fetch(url,{headers});
+    if(resp.ok){
+      const d=await resp.json();
+      const parse=f=>{if(!f)return{};const o={};for(const[k,v]of Object.entries(f)){if(v.stringValue!==undefined)o[k]=v.stringValue;else if(v.booleanValue!==undefined)o[k]=v.booleanValue;else if(v.integerValue!==undefined)o[k]=parseInt(v.integerValue);else if(v.arrayValue!==undefined)o[k]=(v.arrayValue.values||[]).map(i=>i.stringValue||'');else if(v.mapValue!==undefined)o[k]=parse(v.mapValue.fields);}return o;};
+      c={id,...parse(d.fields)};
+    }
+  }catch(e){console.warn('Erro ao reler candidato:',e);}
   document.getElementById('mc-nome').textContent=c.nome+(c.apelido?` (${c.apelido})`:'');
   document.getElementById('mc-sub').textContent=c.cargo+' · '+(c.cidade||'—');
   const end=[c.logr,c.num,c.comp,c.bairro,c.cidade,c.cep].filter(Boolean).join(', ')||'—';
