@@ -126,8 +126,9 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
           <div class="fg"><label>Nome da mãe *</label><input type="text" id="d-mae" placeholder="Nome completo da mãe"></div>
           <div class="fg"><label>Nome do pai</label><input type="text" id="d-pai" placeholder="Nome completo ou desconhecido"></div>
         </div>
-        <div class="g2">
+        <div class="g3">
           <div class="fg"><label>Município de nascimento</label><input type="text" id="d-natmun" placeholder="Cidade onde nasceu"></div>
+          <div class="fg"><label>UF de nascimento</label><select id="d-natuf"><option value="">—</option><option>AC</option><option>AL</option><option>AP</option><option>AM</option><option>BA</option><option>CE</option><option>DF</option><option>ES</option><option>GO</option><option>MA</option><option>MT</option><option>MS</option><option>MG</option><option>PA</option><option>PB</option><option>PR</option><option>PE</option><option>PI</option><option>RJ</option><option>RN</option><option>RS</option><option>RO</option><option>RR</option><option>SC</option><option>SP</option><option>SE</option><option>TO</option></select></div>
           <div class="fg"><label>País de nascimento</label><select id="d-natpais"><option>Brasil</option><option>Portugal</option><option>Argentina</option><option>Paraguai</option><option>Bolívia</option><option>Outro</option></select></div>
         </div>
         <div class="g2">
@@ -305,15 +306,15 @@ async function init(){
     if(docsConfig.length===0){
       docsConfig=[
         {id:'foto',nome:'Foto 3x4',hint:'Foto recente, fundo claro',obrigatorio:true,ordem:1},
-        {id:'rg',nome:'RG (frente e verso)',hint:'Documento de identidade',obrigatorio:true,ordem:2},
+        {id:'rg',nome:'RG (frente e verso)',hint:'Envie 2 arquivos: frente e verso do documento',obrigatorio:true,ordem:2,multiplo:true,maxArquivos:2},
         {id:'cpf',nome:'CPF',hint:'Cartão ou app da Receita Federal',obrigatorio:true,ordem:3},
         {id:'compresid',nome:'Comprovante de residência',hint:'Conta de água, luz ou telefone recente',obrigatorio:true,ordem:4},
-        {id:'pis',nome:'PIS/PASEP',hint:'CTPS Digital ou extrato FGTS',obrigatorio:true,ordem:5},
-        {id:'ctps',nome:'Carteira de Trabalho (CTPS)',hint:'Página com foto e dados pessoais',obrigatorio:true,ordem:6},
-        {id:'cnh',nome:'CNH',hint:'Se o cargo exigir ou se possuir',obrigatorio:false,ordem:7},
+        {id:'pis',nome:'PIS/PASEP',hint:'Encontrado na CTPS Digital ou extrato do app FGTS',obrigatorio:true,ordem:5},
+        {id:'ctps',nome:'Carteira de Trabalho (CTPS Digital)',hint:'No app "Carteira de Trabalho Digital": acesse seu perfil → toque nos 3 pontos (⋮) → "Compartilhar" → "Salvar como PDF" → envie o PDF aqui. Ele contém todos os seus dados (PIS, vínculo, qualificação civil).',obrigatorio:true,ordem:6},
+        {id:'cnh',nome:'CNH',hint:'Frente e verso — se o cargo exigir ou se possuir',obrigatorio:false,ordem:7,multiplo:true,maxArquivos:2},
         {id:'reservista',nome:'Certificado de reservista',hint:'Obrigatório para homens',obrigatorio:false,ordem:8},
         {id:'casamento',nome:'Certidão de casamento',hint:'Se casado(a)',obrigatorio:false,ordem:9},
-        {id:'filhos',nome:'Certidão de nascimento dos filhos',hint:'Filhos menores de 21 anos',obrigatorio:false,ordem:10},
+        {id:'filhos',nome:'Certidão de nascimento dos filhos',hint:'Filhos menores de 21 anos',obrigatorio:false,ordem:10,multiplo:true,maxArquivos:5},
         {id:'vacina',nome:'Carteira de vacinação dos filhos',hint:'Filhos até 7 anos',obrigatorio:false,ordem:11},
       ];
     }
@@ -360,7 +361,7 @@ function preencherCampos(){
   const c=candData;
   const set=(id,val)=>{const el=document.getElementById(id);if(!el||!val)return;el.value=val;el.classList.add('ja-tem');const fg=el.closest('.fg');if(fg){let hint=fg.querySelector('.preenchido');if(!hint){hint=document.createElement('span');hint.className='preenchido';fg.appendChild(hint);}hint.textContent='🟢 Já preenchido na candidatura';}};
   set('d-rg',c.rg);set('d-rgorg',c.rgorg);set('d-pis',c.pis);set('d-mae',c.mae);set('d-pai',c.pai);
-  set('d-natmun',c.natmun);if(c.natpais)set('d-natpais',c.natpais);
+  set('d-natmun',c.natmun);if(c.natuf)set('d-natuf',c.natuf);if(c.natpais)set('d-natpais',c.natpais);
   if(c.pcd){document.getElementById('d-pcd').value=c.pcd;tPCD();if(c.pcdtipo)document.getElementById('d-pcdt').value=c.pcdtipo;}
   set('d-cep',c.cep);set('d-logr',c.logr);set('d-num',c.num);set('d-comp',c.comp);set('d-bairro',c.bairro);set('d-cidade',c.cidade);
   set('d-banco',c.banco);set('d-agencia',c.agencia);set('d-conta',c.conta);set('d-pix',c.pix);
@@ -381,15 +382,27 @@ function renderSlots(){
 }
 
 function slotHtml(d){
-  const up=uploadedFiles[d.id];
-  const cls=up?'ok':'';
-  const badge=up?'<span class="badge b-ok">✓ Enviado</span>':d.obrigatorio?'<span class="badge b-obr">Obrigatório</span>':'<span class="badge b-opt">Opcional</span>';
-  const hint=up?'✓ '+up.name:d.hint||'Toque para enviar';
-  return`<div class="slot ${cls}" id="slot-${d.id}">
-    <input type="file" accept="image/*,.pdf" capture="environment" onchange="handleFile(this,'${d.id}','${d.nome.replace(/'/g,"\\'")}')">
+  const ups=uploadedFiles[d.id]||[];// sempre array
+  const total=ups.length;
+  const max=d.maxArquivos||1;
+  const ok=d.multiplo?(total>=1):(total>0);
+  const cls=ok?'ok':'';
+  const badge=ok?`<span class="badge b-ok">✓ ${total} arquivo${total!==1?'s':''} enviado${total!==1?'s':''}</span>`:d.obrigatorio?'<span class="badge b-obr">Obrigatório</span>':'<span class="badge b-opt">Opcional</span>';
+  const filesList=ups.length?ups.map((f,i)=>`<div style="font-size:11px;color:var(--gtxt);margin-top:3px">✓ ${f.name} <span style="cursor:pointer;color:var(--rtxt);margin-left:4px" onclick="remArq('${d.id}',${i})">✕</span></div>`).join(''):'';
+  const podeAdicionar=total<max;
+  const inputHtml=podeAdicionar?`<input type="file" accept="image/*,.pdf" ${d.multiplo?'':'capture="environment"'} onchange="handleFile(this,'${d.id}','${d.nome.replace(/'/g,"\\'")}',${!!d.multiplo})" style="position:absolute;inset:0;opacity:0;cursor:pointer;width:100%;height:100%">`:'';
+  const hintTxt=ok?'':(d.hint||'Toque para enviar');
+  const addBtn=podeAdicionar&&total>0?`<div style="font-size:11px;color:var(--blue);margin-top:4px;cursor:pointer">＋ Adicionar outro arquivo ${d.multiplo?'('+total+'/'+max+')':''}</div>`:'';
+  return`<div class="slot ${cls}" id="slot-${d.id}" style="position:relative">
+    ${inputHtml}
     <div class="slot-top">
-      <div class="slot-icon">${up?'✅':'📎'}</div>
-      <div class="slot-info"><div class="slot-name">${d.nome}</div><div class="slot-hint" id="hint-${d.id}">${hint}</div></div>
+      <div class="slot-icon">${ok?'✅':'📎'}</div>
+      <div class="slot-info">
+        <div class="slot-name">${d.nome}</div>
+        ${hintTxt?`<div class="slot-hint" id="hint-${d.id}" style="font-size:11px;color:var(--txt3);line-height:1.4;margin-top:2px">${hintTxt}</div>`:''}
+        ${filesList}
+        ${addBtn}
+      </div>
       ${badge}
     </div>
   </div>`;
@@ -398,7 +411,7 @@ function slotHtml(d){
 function atualizarProg(){
   const total=docsConfig.length;
   const enviados=Object.keys(uploadedFiles).length;
-  const obrFalta=docsConfig.filter(d=>d.obrigatorio&&!uploadedFiles[d.id]).length;
+  const obrFalta=docsConfig.filter(d=>d.obrigatorio&&(!uploadedFiles[d.id]||uploadedFiles[d.id].length===0)).length;
   document.getElementById('prog-n').textContent=enviados;
   document.getElementById('prog-l').textContent=`de ${total} documento${total!==1?'s':''} enviado${enviados!==1?'s':''}`;
   document.getElementById('falta-n').textContent=obrFalta;
@@ -412,18 +425,29 @@ function atualizarProg(){
   }
 }
 
-window.handleFile=function(input,docId,docNome){
+window.handleFile=function(input,docId,docNome,multiplo){
   const file=input.files[0];if(!file)return;
-  if(file.size>10*1024*1024){alert('Arquivo muito grande. Máximo: 10MB.');return;}
-  const slot=document.getElementById('slot-'+docId);
-  const hint=document.getElementById('hint-'+docId);
-  if(hint)hint.textContent='Carregando...';
+  if(file.size>10*1024*1024){alert('Arquivo muito grande. Máximo: 10MB por arquivo.');return;}
   const reader=new FileReader();
   reader.onload=function(e){
-    uploadedFiles[docId]={name:file.name,base64:e.target.result.split(',')[1],mimeType:file.type,label:docNome};
+    const entry={name:file.name,base64:e.target.result.split(',')[1],mimeType:file.type,label:docNome};
+    if(multiplo){
+      if(!uploadedFiles[docId])uploadedFiles[docId]=[];
+      uploadedFiles[docId].push(entry);
+    }else{
+      uploadedFiles[docId]=[entry];
+    }
     renderSlots();
   };
   reader.readAsDataURL(file);
+};
+
+window.remArq=function(docId,idx){
+  if(uploadedFiles[docId]){
+    uploadedFiles[docId].splice(idx,1);
+    if(uploadedFiles[docId].length===0)delete uploadedFiles[docId];
+    renderSlots();
+  }
 };
 
 window.irTab=function(n,btn){
@@ -435,7 +459,7 @@ window.irTab=function(n,btn){
 };
 
 window.enviar=async function(){
-  const obrFalta=docsConfig.filter(d=>d.obrigatorio&&!uploadedFiles[d.id]);
+  const obrFalta=docsConfig.filter(d=>d.obrigatorio&&(!uploadedFiles[d.id]||uploadedFiles[d.id].length===0));
   if(obrFalta.length>0){
     obrFalta.forEach(d=>{const s=document.getElementById('slot-'+d.id);if(s)s.classList.add('falta');});
     alert('Envie os documentos obrigatórios antes de continuar:\n\n'+obrFalta.map(d=>'• '+d.nome).join('\n'));
@@ -447,9 +471,13 @@ window.enviar=async function(){
   document.getElementById('ov-txt').textContent='Enviando documentos...';
   try{
     // 1. Enviar arquivos para o Google Drive via proxy
-    const arquivos=Object.entries(uploadedFiles).map(([slotId,f])=>{
-      const ext=f.name.split('.').pop();
-      return {id:slotId,nome:f.label+'_'+candData.nome.replace(/\s+/g,'_')+'.'+ext,base64:f.base64,mimeType:f.mimeType};
+    const arquivos=[];
+    Object.entries(uploadedFiles).forEach(([slotId,arr])=>{
+      arr.forEach((f,i)=>{
+        const ext=f.name.split('.').pop();
+        const sufixo=arr.length>1?`_${i+1}`:'';
+        arquivos.push({id:slotId+(sufixo),nome:f.label+'_'+candData.nome.replace(/\s+/g,'_')+sufixo+'.'+ext,base64:f.base64,mimeType:f.mimeType});
+      });
     });
     let pastaId='';
     try{
@@ -468,7 +496,7 @@ window.enviar=async function(){
     const g=id=>{const el=document.getElementById(id);return el?el.value.trim():''};
     const campos={};
     [['rg','d-rg'],['rgorg','d-rgorg'],['pis','d-pis'],['mae','d-mae'],['pai','d-pai'],
-     ['natmun','d-natmun'],['natpais','d-natpais'],['pcd','d-pcd'],['pcdtipo','d-pcdt'],
+     ['natmun','d-natmun'],['natuf','d-natuf'],['natpais','d-natpais'],['pcd','d-pcd'],['pcdtipo','d-pcdt'],
      ['cep','d-cep'],['logr','d-logr'],['num','d-num'],['comp','d-comp'],['bairro','d-bairro'],['cidade','d-cidade'],
      ['banco','d-banco'],['agencia','d-agencia'],['conta','d-conta'],['pix','d-pix'],
      ['camisa','d-camisa'],['calca','d-calca'],['calcado','d-calcado'],['oculos','d-oculos']
@@ -482,7 +510,8 @@ window.enviar=async function(){
     const docsRecebidos=Object.keys(uploadedFiles);
     const docsStatus={...(candData.docsStatus||{})};
     docsConfig.forEach(d=>{
-      if(uploadedFiles[d.id]) docsStatus[d.id]={recebido:true,nome:uploadedFiles[d.id].label,obrigatorio:d.obrigatorio,enviadoEm:new Date().toISOString()};
+      const arr=uploadedFiles[d.id];
+      if(arr&&arr.length>0) docsStatus[d.id]={recebido:true,qtd:arr.length,nomes:arr.map(f=>f.name),obrigatorio:d.obrigatorio,enviadoEm:new Date().toISOString()};
     });
     await fsUpdate('candidatos',candId,{
       ...campos,
