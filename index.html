@@ -565,7 +565,44 @@ async function carregarCfg(){
   const cols=['cargos','empresas','origens','tiposcontrato','obras','competencias','documentos'];
   for(const col of cols){try{const snap=await getDocs(collection(db,col));cfg[col]=snap.docs.map(d=>({id:d.id,...d.data()}));}catch(e){cfg[col]=[];}}
   if(cfg.cargos.length===0)await popularDefaults();
+  // Verificar se documentos têm campo 'id' fixo — se não, recriar
+  const docsComId=cfg.documentos.filter(d=>d.id&&['foto','rg','cpf','compresid','ctps'].includes(d.id));
+  if(docsComId.length===0){
+    // Deletar documentos antigos e recriar com IDs corretos
+    try{
+      for(const d of cfg.documentos){await deleteDoc(doc(db,'documentos',d.id));}
+    }catch(e){}
+    cfg.documentos=[];
+    await popularDocumentos();
+  }
   popularSelects();
+}
+
+async function popularDocumentos(){
+  const docs=[
+    {id:'foto',nome:'Foto 3x4',hint:'Foto recente, fundo claro',obrigatorio:true,ordem:1},
+    {id:'rg',nome:'RG (frente e verso)',hint:'Envie frente e verso',obrigatorio:true,ordem:2,multiplo:true,maxArquivos:2},
+    {id:'cpf',nome:'CPF',hint:'Cartão ou app da Receita Federal',obrigatorio:true,ordem:3},
+    {id:'compresid',nome:'Comprovante de Residência Atual',hint:'Conta de água, luz ou telefone recente',obrigatorio:true,ordem:4},
+    {id:'pis',nome:'PIS/PASEP',hint:'Encontrado na CTPS Digital ou extrato do app FGTS',obrigatorio:false,ordem:5},
+    {id:'ctps',nome:'Carteira de Trabalho Digital',hint:'No app Carteira de Trabalho Digital: perfil → compartilhar → salvar como PDF',obrigatorio:true,ordem:6},
+    {id:'titulo',nome:'Título de eleitor',hint:'',obrigatorio:true,ordem:7},
+    {id:'cnh',nome:'CNH',hint:'Frente e verso',obrigatorio:false,ordem:8,multiplo:true,maxArquivos:2},
+    {id:'reservista',nome:'Reservista',hint:'Obrigatório para homens',obrigatorio:false,ordem:9},
+    {id:'casamento',nome:'Certidão de Casamento',hint:'Se casado(a)',obrigatorio:false,ordem:10},
+    {id:'filhos',nome:'Certidão de nascimento dos filhos',hint:'Filhos menores de 21 anos',obrigatorio:false,ordem:11,multiplo:true,maxArquivos:5},
+    {id:'vacina',nome:'Carteira de vacinação dos filhos',hint:'Filhos até 7 anos',obrigatorio:false,ordem:12},
+    {id:'vacina_sf',nome:'Carteira de vacinação filhos (Salário Família)',hint:'Filhos até 7 anos',obrigatorio:false,ordem:13},
+    {id:'cpf_dep',nome:'CPF esposa e filhos (Dependente IRRF)',hint:'',obrigatorio:false,ordem:14},
+    {id:'escolaridade',nome:'Comprovante de Escolaridade',hint:'',obrigatorio:false,ordem:15},
+    {id:'cursos',nome:'Cursos Realizados',hint:'',obrigatorio:false,ordem:16},
+    {id:'curriculo',nome:'Currículo',hint:'',obrigatorio:false,ordem:17},
+  ];
+  for(const d of docs){
+    const {id,...data}=d;
+    await setDoc(doc(db,'documentos',id),{...data,id,criadoEm:new Date().toISOString()});
+    cfg.documentos.push({id,...data});
+  }
 }
 
 async function popularDefaults(){
@@ -585,17 +622,23 @@ async function popularDefaults(){
       {categoria:'Certificações',tags:['CREA ativo','CAT emitido','Lei 14.133/21','Caixa/PLS/GIGOV','Pós-graduação'],perfil:'tecnico'},
     ],
     documentos:[
-      {nome:'Foto 3x4',hint:'Foto recente, fundo claro',obrigatorio:true,ordem:1},
-      {nome:'RG (frente e verso)',hint:'Documento de identidade',obrigatorio:true,ordem:2},
-      {nome:'CPF',hint:'Cartão ou app da Receita Federal',obrigatorio:true,ordem:3},
-      {nome:'Comprovante de residência',hint:'Conta de água, luz ou telefone recente',obrigatorio:true,ordem:4},
-      {nome:'PIS/PASEP',hint:'CTPS Digital ou extrato FGTS',obrigatorio:true,ordem:5},
-      {nome:'Carteira de Trabalho (CTPS)',hint:'Página com foto e dados pessoais',obrigatorio:true,ordem:6},
-      {nome:'CNH',hint:'Se o cargo exigir ou se possuir',obrigatorio:false,ordem:7},
-      {nome:'Certificado de reservista',hint:'Obrigatório para homens',obrigatorio:false,ordem:8},
-      {nome:'Certidão de casamento',hint:'Se casado(a)',obrigatorio:false,ordem:9},
-      {nome:'Certidão de nascimento dos filhos',hint:'Filhos menores de 21 anos',obrigatorio:false,ordem:10},
-      {nome:'Carteira de vacinação dos filhos',hint:'Filhos até 7 anos',obrigatorio:false,ordem:11},
+      {id:'foto',nome:'Foto 3x4',hint:'Foto recente, fundo claro',obrigatorio:true,ordem:1},
+      {id:'rg',nome:'RG (frente e verso)',hint:'Documento de identidade',obrigatorio:true,ordem:2},
+      {id:'cpf',nome:'CPF',hint:'Cartão ou app da Receita Federal',obrigatorio:true,ordem:3},
+      {id:'compresid',nome:'Comprovante de Residência Atual',hint:'Conta de água, luz ou telefone recente',obrigatorio:true,ordem:4},
+      {id:'pis',nome:'PIS/PASEP',hint:'CTPS Digital ou extrato FGTS',obrigatorio:false,ordem:5},
+      {id:'ctps',nome:'Carteira de Trabalho Digital',hint:'No app Carteira de Trabalho Digital: perfil → compartilhar → salvar como PDF',obrigatorio:true,ordem:6},
+      {id:'cnh',nome:'CNH',hint:'Se o cargo exigir ou se possuir',obrigatorio:false,ordem:7},
+      {id:'reservista',nome:'Certificado de reservista',hint:'Obrigatório para homens',obrigatorio:false,ordem:8},
+      {id:'casamento',nome:'Certidão de casamento',hint:'Se casado(a)',obrigatorio:false,ordem:9},
+      {id:'filhos',nome:'Certidão de nascimento dos filhos',hint:'Filhos menores de 21 anos',obrigatorio:false,ordem:10},
+      {id:'vacina',nome:'Carteira de vacinação dos filhos',hint:'Filhos até 7 anos',obrigatorio:false,ordem:11},
+      {id:'titulo',nome:'Título de eleitor',hint:'',obrigatorio:true,ordem:12},
+      {id:'cpf_dep',nome:'CPF esposa e filhos (Dependente IRRF)',hint:'',obrigatorio:false,ordem:13},
+      {id:'cursos',nome:'Cursos Realizados',hint:'',obrigatorio:false,ordem:14},
+      {id:'curriculo',nome:'Currículo',hint:'',obrigatorio:false,ordem:15},
+      {id:'escolaridade',nome:'Comprovante de Escolaridade',hint:'',obrigatorio:false,ordem:16},
+      {id:'vacina_sf',nome:'Carteira de vacinação dos filhos menores de 7 anos (Salário Família)',hint:'',obrigatorio:false,ordem:17},
     ],
   };
   for(const [col,items] of Object.entries(defs)){
