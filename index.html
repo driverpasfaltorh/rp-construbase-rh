@@ -468,7 +468,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
 
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
-import { initializeAuth, browserLocalPersistence, createUserWithEmailAndPassword, updateProfile } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
+import { initializeAuth, browserLocalPersistence, createUserWithEmailAndPassword, updateProfile, signInWithEmailAndPassword } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
 import { getFirestore, collection, doc, addDoc, setDoc, getDoc, getDocs, updateDoc, deleteDoc, query, orderBy, onSnapshot } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
 
 const FC={apiKey:"AIzaSyBAaXDcUgYFjZO3JiiXl5JVpvlybPO7p7A",authDomain:"rp-construbase-rh.firebaseapp.com",projectId:"rp-construbase-rh",storageBucket:"rp-construbase-rh.firebasestorage.app",messagingSenderId:"420511174774",appId:"1:420511174774:web:c2b6ec88346386cad9cf57"};
@@ -517,6 +517,8 @@ window.login=async function(){
     }
     sessionStorage.setItem('fb_token',data.idToken);sessionStorage.setItem('fb_email',data.email);sessionStorage.setItem('fb_uid',data.localId);
     CU={email:data.email,uid:data.localId,token:data.idToken};
+    // Autenticar SDK para onSnapshot e getDoc funcionarem com regras de segurança
+    try{await signInWithEmailAndPassword(authSDK,email,senha);}catch(e){console.warn('SDK auth:',e);}
     await iniciarApp();
   }catch(e){err.textContent='Erro de conexão.';err.style.display='block';btn.disabled=false;btn.textContent='Entrar';}
 };
@@ -1892,7 +1894,18 @@ function toast(m,t){window.toast(m,t);}
 // INIT
 (function(){
   const token=sessionStorage.getItem('fb_token');const email=sessionStorage.getItem('fb_email');const uid=sessionStorage.getItem('fb_uid');
-  if(token&&email&&uid){CU={email,uid,token};iniciarApp();}
+  if(token&&email&&uid){
+    CU={email,uid,token};
+    // Aguardar SDK auth (pode já estar logado via browserLocalPersistence)
+    import('https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js').then(({onAuthStateChanged})=>{
+      let iniciou=false;
+      const unsub=onAuthStateChanged(authSDK,user=>{
+        if(!iniciou){iniciou=true;unsub();iniciarApp();}
+      });
+      // Fallback: se SDK demorar, inicia mesmo assim após 1.5s
+      setTimeout(()=>{if(!iniciou){iniciou=true;iniciarApp();}},1500);
+    });
+  }
   else{document.getElementById('auth').style.display='flex';}
 })();
 </script>
