@@ -1759,9 +1759,10 @@ window.fazerVinculo = async function(vagaId,candId,nome){
 
 window.editarVaga = function(id){
   const v=vagas.find(x=>x.id===id);if(!v)return;
-  vagaEditId=id;perguntasVaga=[...(v.perguntas||[]).map((p,i)=>({id:'pe'+i,...p}))];
+  perguntasVaga=[...(v.perguntas||[]).map((p,i)=>({id:'pe'+i,...p}))];
   closeModal('modal-vaga-det');
   window.abrirNovaVaga();
+  vagaEditId=id; // definir APÓS abrirNovaVaga para não ser zerado
   document.getElementById('mv-title').textContent='Editar vaga';
   setTimeout(()=>{
     const s=(i,val)=>{const el=document.getElementById(i);if(el&&val!=null)el.value=val;};
