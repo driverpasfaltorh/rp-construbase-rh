@@ -1930,15 +1930,31 @@ window.salvarEvento = async function(){
   try{
     const cand = candidatos.find(c=>c.id===selCandId);
     const eventosAtuais = cand?.selecao||[];
-    await updateDoc(doc(db,'candidatos',selCandId),{
-      selecao:[...eventosAtuais, evento],
-      selecaoStatus: novoSelStatus,
-      status: novoStatus,
-      atualizadoEm: new Date().toISOString()
-    });
+    const novosEventos = [...eventosAtuais, evento];
+    // Usar REST API para evitar permission-denied do SDK
+    const proj='rp-construbase-rh';
+    const token=sessionStorage.getItem('fb_token');
+    const url=`https://firestore.googleapis.com/v1/projects/${proj}/databases/(default)/documents/candidatos/${selCandId}?updateMask.fieldPaths=selecao&updateMask.fieldPaths=selecaoStatus&updateMask.fieldPaths=status&updateMask.fieldPaths=atualizadoEm`;
+    const toFsValue=v=>{
+      if(typeof v==='boolean')return{booleanValue:v};
+      if(typeof v==='number')return{integerValue:v};
+      if(Array.isArray(v))return{arrayValue:{values:v.map(i=>({mapValue:{fields:Object.fromEntries(Object.entries(i).map(([k2,v2])=>[k2,toFsValue(v2)]))}}))}}; 
+      return{stringValue:String(v)};
+    };
+    const body=JSON.stringify({fields:{
+      selecao:toFsValue(novosEventos),
+      selecaoStatus:{stringValue:novoSelStatus},
+      status:{stringValue:novoStatus},
+      atualizadoEm:{stringValue:new Date().toISOString()}
+    }});
+    const headers={'Content-Type':'application/json'};
+    if(token)headers['Authorization']=`Bearer ${token}`;
+    const resp=await fetch(url,{method:'PATCH',headers,body});
+    if(!resp.ok)throw new Error(await resp.text());
+    // Atualizar cache local
+    if(cand){cand.selecao=novosEventos;cand.selecaoStatus=novoSelStatus;cand.status=novoStatus;}
     closeModal('modal-sel-evento');
     toast('Evento registrado!','ok');
-    // Reabrir ficha atualizada
     setTimeout(()=>abrirCand(selCandId), 400);
   }catch(e){toast('Erro: '+e.message,'er');}
 };
@@ -1949,14 +1965,23 @@ window.excluirEvento = async function(candId, idx){
   if(!cand) return;
   const eventos = [...(cand.selecao||[])];
   eventos.splice(idx,1);
-  // Recalcular status
   const ultEvento = eventos[eventos.length-1];
+  const novoSelStatus = ultEvento?(ultEvento.tipo==='triagem'?'triagem':ultEvento.tipo==='entrevista'?'entrevista':ultEvento.tipo==='avaliacao'?'avaliacao':ultEvento.tipo==='proposta'?'proposta':'triagem'):'triagem';
   try{
-    await updateDoc(doc(db,'candidatos',candId),{
-      selecao: eventos,
-      selecaoStatus: ultEvento ? (ultEvento.tipo==='triagem'?'triagem':ultEvento.tipo==='entrevista'?'entrevista':ultEvento.tipo==='avaliacao'?'avaliacao':ultEvento.tipo==='proposta'?'proposta':'triagem') : 'triagem',
-      atualizadoEm: new Date().toISOString()
-    });
+    const proj='rp-construbase-rh';
+    const token=sessionStorage.getItem('fb_token');
+    const toFsValue=v=>{
+      if(typeof v==='boolean')return{booleanValue:v};
+      if(Array.isArray(v))return{arrayValue:{values:v.map(i=>({mapValue:{fields:Object.fromEntries(Object.entries(i).map(([k2,v2])=>[k2,toFsValue(v2)]))}}))}}; 
+      return{stringValue:String(v??'')};
+    };
+    const url=`https://firestore.googleapis.com/v1/projects/${proj}/databases/(default)/documents/candidatos/${candId}?updateMask.fieldPaths=selecao&updateMask.fieldPaths=selecaoStatus&updateMask.fieldPaths=atualizadoEm`;
+    const body=JSON.stringify({fields:{selecao:toFsValue(eventos),selecaoStatus:{stringValue:novoSelStatus},atualizadoEm:{stringValue:new Date().toISOString()}}});
+    const headers={'Content-Type':'application/json'};
+    if(token)headers['Authorization']=`Bearer ${token}`;
+    const resp=await fetch(url,{method:'PATCH',headers,body});
+    if(!resp.ok)throw new Error(await resp.text());
+    if(cand){cand.selecao=eventos;cand.selecaoStatus=novoSelStatus;}
     toast('Evento excluído!','ok');
     setTimeout(()=>abrirCand(candId), 400);
   }catch(e){toast('Erro: '+e.message,'er');}
