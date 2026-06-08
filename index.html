@@ -199,6 +199,8 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
         <div class="fg"><label>Cargo</label><select id="fb-cargo" onchange="renderCands()"><option value="">Todos</option></select></div>
         <div class="fg"><label>Status</label><select id="fb-status" onchange="renderCands()"><option value="">Todos</option><option value="disponivel">Disponível</option><option value="processo">Em processo</option><option value="contratado">Contratado</option><option value="descartado">Descartado</option></select></div>
         <div class="fg"><label>Origem</label><select id="fb-origem" onchange="renderCands()"><option value="">Todas</option></select></div>
+        <div class="fg"><label>Deslocamento</label><select id="fb-desl" onchange="renderCands()"><option value="">Todos</option><option value="sim">Com deslocamento próprio</option><option value="nao">Sem deslocamento próprio</option></select></div>
+        <div class="fg"><label>PCD / Cota</label><select id="fb-pcd" onchange="renderCands()"><option value="">Todos</option><option value="cota">Cota Legal</option><option value="pcd_sem_cota">PCD sem cota</option><option value="nao">Não PCD</option></select></div>
         <div class="fg"><label>Competência</label><input type="text" id="fb-comp" placeholder="Ex: Fresa, SINAPI..." onkeydown="if(event.key==='Enter')renderCands()" style="min-width:140px"></div>
         <div class="fg" style="justify-content:flex-end"><label>&nbsp;</label><div style="display:flex;gap:6px"><button class="btn btn-p" onclick="renderCands()" style="white-space:nowrap;height:38px">Buscar</button><button class="btn" onclick="limparFiltros()" style="white-space:nowrap;height:38px">Limpar</button></div></div>
       </div>
@@ -866,6 +868,8 @@ window.renderCands = function renderCands(){
   const cargo=document.getElementById('fb-cargo')?.value||'';
   const status=document.getElementById('fb-status')?.value||'';
   const origem=document.getElementById('fb-origem')?.value||'';
+  const desl=document.getElementById('fb-desl')?.value||'';
+  const pcd=document.getElementById('fb-pcd')?.value||'';
   const comp=(document.getElementById('fb-comp')?.value||'').toLowerCase();
   let res=candidatos.filter(c=>{
     if(busca){
@@ -874,7 +878,11 @@ window.renderCands = function renderCands(){
       ].map(v=>(v||'').toLowerCase());
       if(!campos.some(v=>v.includes(busca)))return false;
     }
-    if(cargo&&c.cargo!==cargo)return false;if(status&&c.status!==status)return false;if(origem&&c.origem!==origem)return false;
+    if(cargo&&c.cargo!==cargo)return false;
+    if(status&&c.status!==status)return false;
+    if(origem&&c.origem!==origem)return false;
+    if(desl&&c.deslocamento!==desl)return false;
+    if(pcd&&c.pcdCota!==pcd)return false;
     if(comp){const all=(c.competencias||[]).map(t=>t.toLowerCase());if(!all.some(t=>t.includes(comp)))return false;}
     return true;
   });
@@ -971,6 +979,8 @@ window.abrirCand=async function(id){
     <div class="det-sec">Vaga e processo</div>
     ${dr('Origem',`<span class="badge ${OBC[c.origem]||''}">${ol}</span>`)}
     ${dr('Tipo de contrato',c.tipoContrato||'—')}${dr('Empresa interesse',c.empresa||'—')}
+    ${dr('Deslocamento próprio',c.deslocamento==='sim'?'✅ Sim':'nao'===c.deslocamento?'❌ Não':'—')}
+    ${dr('PCD / Cota',{'nao':'Não PCD','cota':'✅ PCD — Cota Legal','pcd_sem_cota':'PCD — Sem cota','ni':'Prefiro não informar'}[c.pcdCota]||'—')}
     ${dr('Status',`<select style="font-size:12px;padding:3px 6px;border:0.5px solid var(--brd2);border-radius:4px" onchange="mudarStatus('${c.id}',this.value)">${Object.entries(SL).map(([v,l])=>`<option value="${v}"${c.status===v?' selected':''}>${l}</option>`).join('')}</select>`)}
     <div class="det-sec">Competências</div>
     ${dr('Instrução',c.inst||'—')}${dr('Experiência',c.exp||'—')}
@@ -2002,7 +2012,7 @@ window.excluirEvento = async function(candId, idx){
 
 window.limparFiltros=function(){
   ['fb-busca','fb-comp'].forEach(id=>{const el=document.getElementById(id);if(el)el.value='';});
-  ['fb-cargo','fb-status','fb-origem'].forEach(id=>{const el=document.getElementById(id);if(el)el.selectedIndex=0;});
+  ['fb-cargo','fb-status','fb-origem','fb-desl','fb-pcd'].forEach(id=>{const el=document.getElementById(id);if(el)el.selectedIndex=0;});
   renderCands();
 };
 window.openModal=function(id){document.getElementById(id).classList.add('open');};
