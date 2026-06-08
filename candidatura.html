@@ -133,6 +133,26 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
       </div>
     </div>
 
+    <div class="card" style="margin-top:1rem">
+      <div class="fg">
+        <label>Você tem como se deslocar até o trabalho por conta própria? *</label>
+        <div style="display:flex;flex-direction:column;gap:8px;margin-top:6px">
+          <label style="display:flex;align-items:center;gap:8px;font-weight:400;cursor:pointer"><input type="radio" name="deslocamento" value="sim" id="f-desl-sim"> Sim, consigo chegar por conta própria</label>
+          <label style="display:flex;align-items:center;gap:8px;font-weight:400;cursor:pointer"><input type="radio" name="deslocamento" value="nao" id="f-desl-nao"> Não, preciso de transporte fornecido pela empresa</label>
+        </div>
+        <div class="hint" style="margin-top:4px">A empresa não oferece transporte. Esta informação é importante para o processo seletivo.</div>
+      </div>
+      <div class="fg" style="margin-top:1rem">
+        <label>Você é Pessoa com Deficiência (PCD)? *</label>
+        <div style="display:flex;flex-direction:column;gap:8px;margin-top:6px">
+          <label style="display:flex;align-items:center;gap:8px;font-weight:400;cursor:pointer"><input type="radio" name="pcdCota" value="nao" id="f-pcd-nao"> Não</label>
+          <label style="display:flex;align-items:center;gap:8px;font-weight:400;cursor:pointer"><input type="radio" name="pcdCota" value="cota" id="f-pcd-cota"> Sim — desejo concorrer à Cota Legal</label>
+          <label style="display:flex;align-items:center;gap:8px;font-weight:400;cursor:pointer"><input type="radio" name="pcdCota" value="pcd_sem_cota" id="f-pcd-sem"> Sim — não desejo concorrer à Cota Legal</label>
+          <label style="display:flex;align-items:center;gap:8px;font-weight:400;cursor:pointer"><input type="radio" name="pcdCota" value="ni" id="f-pcd-ni"> Prefiro não informar</label>
+        </div>
+      </div>
+    </div>
+
     <div class="btn-row"><button class="btn btn-p" onclick="irE(2)">Próximo →</button></div>
   </div>
 
@@ -322,14 +342,20 @@ window.enviar=async function(){
   if(!val2())return;
   saveExps();saveForms();
   const g=id=>{const el=document.getElementById(id);return el?el.value.trim():''};
+  const radio=name=>{const el=document.querySelector(`input[name="${name}"]:checked`);return el?el.value:'';};
   const ov=document.getElementById('ov');
   const ovTxt=document.getElementById('ov-txt');
+  // Validar campos obrigatórios novos
+  if(!radio('deslocamento')){alert('Por favor, informe se você tem como se deslocar até o trabalho.');return;}
+  if(!radio('pcdCota')){alert('Por favor, responda a pergunta sobre PCD.');return;}
   ov.classList.add('show');ovTxt.textContent='Salvando sua candidatura...';
   const cand={
     nome:g('f-nome'),cpf:g('f-cpf'),nasc:g('f-nasc'),sexo:g('f-sexo'),ecivil:g('f-ecivil'),raca:g('f-raca'),
     tel:g('f-tel'),email:g('f-email'),cep:g('f-cep'),logr:g('f-logr'),num:g('f-num'),bairro:g('f-bairro'),cidade:g('f-cidade'),
     cargo:g('f-cargo'),inst:g('f-inst'),exp:g('f-exp'),cnh:g('f-cnh')?[g('f-cnh')]:[],sal:g('f-sal'),
     trajetoria:g('f-traj'),
+    deslocamento:radio('deslocamento'),
+    pcdCota:radio('pcdCota'),
     experiencias:exps.map(e=>({empresa:e.emp||'',cargo:e.cargo||'',de:e.de||'',ate:e.ate||'',vinculo:e.vinculo||'',motivo:e.motivo||''})).filter(e=>e.empresa||e.cargo),
     formacoes:forms.map(f=>({nome:f.nome||'',inst:f.inst||'',ano:f.ano||''})).filter(f=>f.nome),
     temCurriculo:!!cvFile,nomeCurriculo:cvFile?.name||'',
