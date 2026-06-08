@@ -908,8 +908,18 @@ window.abrirCand=async function(id){
     const resp=await fetch(url,{headers});
     if(resp.ok){
       const d=await resp.json();
-      const parse=f=>{if(!f)return{};const o={};for(const[k,v]of Object.entries(f)){if(v.stringValue!==undefined)o[k]=v.stringValue;else if(v.booleanValue!==undefined)o[k]=v.booleanValue;else if(v.integerValue!==undefined)o[k]=parseInt(v.integerValue);else if(v.arrayValue!==undefined)o[k]=(v.arrayValue.values||[]).map(i=>i.stringValue||'');else if(v.mapValue!==undefined)o[k]=parse(v.mapValue.fields);}return o;};
-      c={id,...parse(d.fields)};
+      const parseVal=v=>{
+        if(!v)return null;
+        if(v.stringValue!==undefined)return v.stringValue;
+        if(v.booleanValue!==undefined)return v.booleanValue;
+        if(v.integerValue!==undefined)return parseInt(v.integerValue);
+        if(v.doubleValue!==undefined)return v.doubleValue;
+        if(v.mapValue!==undefined)return parseFields(v.mapValue.fields||{});
+        if(v.arrayValue!==undefined)return(v.arrayValue.values||[]).map(parseVal);
+        return null;
+      };
+      const parseFields=f=>{if(!f)return{};const o={};for(const[k,v]of Object.entries(f)){o[k]=parseVal(v);}return o;};
+      c={id,...parseFields(d.fields)};
     }else{
       const err=await resp.text();
       console.warn('REST falhou:', resp.status, err);
@@ -1096,7 +1106,9 @@ window.abrirAdm=async function(id){
     const resp=await fetch(url,{headers});
     if(resp.ok){
       const d=await resp.json();
-      const parse=f=>{if(!f)return{};const o={};for(const[k,v]of Object.entries(f)){if(v.stringValue!==undefined)o[k]=v.stringValue;else if(v.booleanValue!==undefined)o[k]=v.booleanValue;else if(v.integerValue!==undefined)o[k]=parseInt(v.integerValue);else if(v.arrayValue!==undefined)o[k]=(v.arrayValue.values||[]).map(i=>i.stringValue||'');else if(v.mapValue!==undefined)o[k]=parse(v.mapValue.fields);}return o;};
+      const parseVal2=v=>{if(!v)return null;if(v.stringValue!==undefined)return v.stringValue;if(v.booleanValue!==undefined)return v.booleanValue;if(v.integerValue!==undefined)return parseInt(v.integerValue);if(v.doubleValue!==undefined)return v.doubleValue;if(v.mapValue!==undefined)return parseFields2(v.mapValue.fields||{});if(v.arrayValue!==undefined)return(v.arrayValue.values||[]).map(parseVal2);return null;};
+      const parseFields2=f=>{if(!f)return{};const o={};for(const[k,v]of Object.entries(f)){o[k]=parseVal2(v);}return o;};
+      const parse=parseFields2;
       c={id:a.candidatoId,...parse(d.fields)};
     }
   }catch(e){console.warn('Erro ao reler candidato:',e);}
