@@ -565,15 +565,21 @@ async function carregarCfg(){
   const cols=['cargos','empresas','origens','tiposcontrato','obras','competencias','documentos'];
   for(const col of cols){try{const snap=await getDocs(collection(db,col));cfg[col]=snap.docs.map(d=>({id:d.id,...d.data()}));}catch(e){cfg[col]=[];}}
   if(cfg.cargos.length===0)await popularDefaults();
-  // Verificar se documentos têm campo 'id' fixo — se não, recriar
-  const docsComId=cfg.documentos.filter(d=>d.id&&['foto','rg','cpf','compresid','ctps'].includes(d.id));
-  if(docsComId.length===0){
-    // Deletar documentos antigos e recriar com IDs corretos
+  // Migrar documentos que não têm campo 'id' fixo (IDs gerados pelo addDoc)
+  const docsParaMigrar=cfg.documentos.filter(d=>{
+    const temIdFixo=['foto','rg','cpf','compresid','pis','ctps','titulo','cnh','reservista',
+      'casamento','filhos','vacina','vacina_sf','cpf_dep','escolaridade','cursos','curriculo'];
+    return !temIdFixo.includes(d.id)&&d.nome;
+  });
+  for(const d of docsParaMigrar){
+    const novoId=d.nome.toLowerCase()
+      .normalize('NFD').replace(/[\u0300-\u036f]/g,'')
+      .replace(/[^a-z0-9]+/g,'_').replace(/^_|_$/g,'').slice(0,30);
     try{
-      for(const d of cfg.documentos){await deleteDoc(doc(db,'documentos',d.id));}
-    }catch(e){}
-    cfg.documentos=[];
-    await popularDocumentos();
+      await setDoc(doc(db,'documentos',novoId),{...d,id:novoId});
+      await deleteDoc(doc(db,'documentos',d.id));
+      cfg.documentos=cfg.documentos.map(x=>x.id===d.id?{...x,id:novoId}:x);
+    }catch(e){console.warn('Erro ao migrar doc:',e);}
   }
   popularSelects();
 }
@@ -1248,7 +1254,22 @@ window.salvarCfgItem=async function(){
   data.atualizadoEm=new Date().toISOString();
   try{
     if(cfgEditItem){await setDoc(doc(db,col,cfgEditItem.id),{...cfgEditItem,...data});cfg[col]=cfg[col].map(x=>x.id===cfgEditItem.id?{...x,...data}:x);}
-    else{data.criadoEm=new Date().toISOString();const ref=await addDoc(collection(db,col),data);cfg[col].push({id:ref.id,...data});}
+    else{
+      data.criadoEm=new Date().toISOString();
+      let newId;
+      if(col==='documentos'&&data.nome){
+        // Gerar ID fixo baseado no nome para documentos
+        newId=data.nome.toLowerCase()
+          .normalize('NFD').replace(/[\u0300-\u036f]/g,'')
+          .replace(/[^a-z0-9]+/g,'_').replace(/^_|_$/g,'').slice(0,30);
+        data.id=newId;
+        await setDoc(doc(db,col,newId),data);
+        cfg[col].push({id:newId,...data});
+      }else{
+        const ref=await addDoc(collection(db,col),data);
+        cfg[col].push({id:ref.id,...data});
+      }
+    }
     popularSelects();closeModal('modal-cfg');renderCfgTab(col);toast('Salvo!','ok');
   }catch(e){toast('Erro: '+e.message,'er');}
 };
