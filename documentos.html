@@ -493,8 +493,9 @@ window.enviar=async function(){
         body:JSON.stringify({nomeCandidato:candData.nome,arquivos})
       });
       const res=await resp.json();
+      console.log('Drive resposta:', JSON.stringify(res));
       if(res.sucesso) pastaId=res.pastaId;
-      else console.error('Drive:',res.erro);
+      else console.error('Drive erro:', res.erro, res);
     }catch(de){console.error('Erro Drive:',de);}
 
     // 2. Coletar dados complementares preenchidos
