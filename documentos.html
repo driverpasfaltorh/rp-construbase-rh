@@ -476,27 +476,40 @@ window.enviar=async function(){
   ov.classList.add('show');
   document.getElementById('ov-txt').textContent='Enviando documentos...';
   try{
-    // 1. Enviar arquivos para o Google Drive via proxy
+    // 1. Enviar arquivos para o Google Drive via proxy (um por vez para evitar timeout)
     const arquivos=[];
     Object.entries(uploadedFiles).forEach(([slotId,arr])=>{
       arr.forEach((f,i)=>{
         const ext=f.name.split('.').pop();
         const sufixo=arr.length>1?`_${i+1}`:'';
-        arquivos.push({id:slotId+(sufixo),nome:f.label+'_'+candData.nome.replace(/\s+/g,'_')+sufixo+'.'+ext,base64:f.base64,mimeType:f.mimeType});
+        arquivos.push({id:slotId+sufixo,nome:f.label+'_'+candData.nome.replace(/\s+/g,'_')+sufixo+'.'+ext,base64:f.base64,mimeType:f.mimeType});
       });
     });
+    const PROXY='https://script.google.com/macros/s/AKfycbwFGla8cxxxo2HKGMyEA3BpYxitcYiWy6kqwFzv9jcme7-kVw_BNb7PvXRTCmeqta0soA/exec';
     let pastaId='';
-    try{
-      document.getElementById('ov-txt').textContent='Salvando no Google Drive...';
-      const resp=await fetch('https://script.google.com/macros/s/AKfycbwFGla8cxxxo2HKGMyEA3BpYxitcYiWy6kqwFzv9jcme7-kVw_BNb7PvXRTCmeqta0soA/exec',{
-        method:'POST',headers:{'Content-Type':'text/plain'},
-        body:JSON.stringify({nomeCandidato:candData.nome,arquivos})
-      });
-      const res=await resp.json();
-      console.log('Drive resposta:', JSON.stringify(res));
-      if(res.sucesso) pastaId=res.pastaId;
-      else console.error('Drive erro:', res.erro, res);
-    }catch(de){console.error('Erro Drive:',de);}
+    if(arquivos.length>0){
+      try{
+        // Primeiro criar/obter a pasta
+        document.getElementById('ov-txt').textContent='Criando pasta no Google Drive...';
+        const rPasta=await fetch(PROXY,{method:'POST',headers:{'Content-Type':'text/plain'},
+          body:JSON.stringify({nomeCandidato:candData.nome,arquivos:[]})});
+        const resPasta=await rPasta.json();
+        if(resPasta.sucesso) pastaId=resPasta.pastaId;
+
+        // Enviar um arquivo por vez
+        for(let i=0;i<arquivos.length;i++){
+          const arq=arquivos[i];
+          document.getElementById('ov-txt').textContent=`Enviando ${i+1}/${arquivos.length}: ${arq.nome.split('_')[0]}...`;
+          try{
+            const r=await fetch(PROXY,{method:'POST',headers:{'Content-Type':'text/plain'},
+              body:JSON.stringify({nomeCandidato:candData.nome,pastaId,arquivos:[arq]})});
+            const res=await r.json();
+            if(res.sucesso&&res.pastaId) pastaId=res.pastaId;
+            else console.warn('Arquivo com erro:',arq.nome, res.erro);
+          }catch(ae){console.warn('Erro no arquivo:',arq.nome,ae);}
+        }
+      }catch(de){console.error('Erro Drive:',de);}
+    }
 
     // 2. Coletar dados complementares preenchidos
     document.getElementById('ov-txt').textContent='Salvando dados...';
