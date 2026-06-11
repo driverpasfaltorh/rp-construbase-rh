@@ -517,7 +517,11 @@ window.login=async function(){
       err.textContent=m.includes('INVALID_LOGIN_CREDENTIALS')||m.includes('INVALID_PASSWORD')||m.includes('EMAIL_NOT_FOUND')?'E-mail ou senha incorretos.':m.includes('TOO_MANY_ATTEMPTS')?'Muitas tentativas. Aguarde.':'Erro: '+m;
       err.style.display='block';btn.disabled=false;btn.textContent='Entrar';return;
     }
-    sessionStorage.setItem('fb_token',data.idToken);sessionStorage.setItem('fb_email',data.email);sessionStorage.setItem('fb_uid',data.localId);
+    sessionStorage.setItem('fb_token',data.idToken);
+    sessionStorage.setItem('fb_token_exp', Date.now()+55*60*1000); // expira em 55min
+    sessionStorage.setItem('fb_refresh',data.refreshToken);
+    sessionStorage.setItem('fb_email',data.email);
+    sessionStorage.setItem('fb_uid',data.localId);
     CU={email:data.email,uid:data.localId,token:data.idToken};
     // Autenticar SDK para onSnapshot e getDoc funcionarem com regras de segurança
     try{await signInWithEmailAndPassword(authSDK,email,senha);}catch(e){console.warn('SDK auth:',e);}
@@ -549,6 +553,29 @@ window.esqueceuSenha = async function(){
 };
 
 window.logout=function(){sessionStorage.clear();CU=null;cuProfile=null;document.getElementById('auth').style.display='flex';document.getElementById('app').style.display='none';document.getElementById('btn-login').disabled=false;document.getElementById('btn-login').textContent='Entrar';};
+
+// Retorna token válido, renovando se necessário
+async function getToken(){
+  const exp=parseInt(sessionStorage.getItem('fb_token_exp')||'0');
+  if(Date.now()<exp) return sessionStorage.getItem('fb_token');
+  // Token expirado — renovar com refreshToken
+  const refresh=sessionStorage.getItem('fb_refresh');
+  if(!refresh) return sessionStorage.getItem('fb_token');
+  try{
+    const r=await fetch('https://securetoken.googleapis.com/v1/token?key=AIzaSyBAaXDcUgYFjZO3JiiXl5JVpvlybPO7p7A',{
+      method:'POST',headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({grant_type:'refresh_token',refresh_token:refresh})
+    });
+    const d=await r.json();
+    if(d.id_token){
+      sessionStorage.setItem('fb_token',d.id_token);
+      sessionStorage.setItem('fb_token_exp',Date.now()+55*60*1000);
+      sessionStorage.setItem('fb_refresh',d.refresh_token);
+      return d.id_token;
+    }
+  }catch(e){console.warn('Erro ao renovar token:',e);}
+  return sessionStorage.getItem('fb_token');
+}
 
 async function iniciarApp(){
   document.getElementById('auth').style.display='none';document.getElementById('app').style.display='block';
@@ -815,7 +842,7 @@ window.salvarCand=async function(){
   };
   try{
     const proj='rp-construbase-rh';
-    const token=sessionStorage.getItem('fb_token');
+    const token=await getToken();
     const headers={'Content-Type':'application/json'};
     if(token)headers['Authorization']=`Bearer ${token}`;
     const toFs=v=>{
@@ -926,7 +953,7 @@ window.abrirCand=async function(id){
   // Reler do Firestore para pegar docsStatus atualizado
   try{
     const proj='rp-construbase-rh';
-    const token=sessionStorage.getItem('fb_token');
+    const token=await getToken();
     const url=`https://firestore.googleapis.com/v1/projects/${proj}/databases/(default)/documents/candidatos/${id}`;
     const headers={'Content-Type':'application/json'};
     if(token)headers['Authorization']=`Bearer ${token}`;
@@ -1125,7 +1152,7 @@ window.abrirAdm=async function(id){
   // Reler candidato via REST API com idToken (evita permission-denied do SDK)
   let c=candidatos.find(x=>x.id===a.candidatoId)||null;
   try{
-    const token=sessionStorage.getItem('fb_token');
+    const token=await getToken();
     const proj='rp-construbase-rh';
     const url=`https://firestore.googleapis.com/v1/projects/${proj}/databases/(default)/documents/candidatos/${a.candidatoId}${token?'':'?key=AIzaSyC_Uy9YZbCWMOEyBvlMovLw-tgjHk8L3Ec'}`;
     const headers={'Content-Type':'application/json'};
@@ -1973,7 +2000,7 @@ window.salvarEvento = async function(){
     const novosEventos = [...eventosAtuais, evento];
     // Usar REST API para evitar permission-denied do SDK
     const proj='rp-construbase-rh';
-    const token=sessionStorage.getItem('fb_token');
+    const token=await getToken();
     const url=`https://firestore.googleapis.com/v1/projects/${proj}/databases/(default)/documents/candidatos/${selCandId}?updateMask.fieldPaths=selecao&updateMask.fieldPaths=selecaoStatus&updateMask.fieldPaths=status&updateMask.fieldPaths=atualizadoEm`;
     const toFsValue=v=>{
       if(typeof v==='boolean')return{booleanValue:v};
@@ -2009,7 +2036,7 @@ window.excluirEvento = async function(candId, idx){
   const novoSelStatus = ultEvento?(ultEvento.tipo==='triagem'?'triagem':ultEvento.tipo==='entrevista'?'entrevista':ultEvento.tipo==='avaliacao'?'avaliacao':ultEvento.tipo==='proposta'?'proposta':'triagem'):'triagem';
   try{
     const proj='rp-construbase-rh';
-    const token=sessionStorage.getItem('fb_token');
+    const token=await getToken();
     const toFsValue=v=>{
       if(typeof v==='boolean')return{booleanValue:v};
       if(Array.isArray(v))return{arrayValue:{values:v.map(i=>({mapValue:{fields:Object.fromEntries(Object.entries(i).map(([k2,v2])=>[k2,toFsValue(v2)]))}}))}}; 
