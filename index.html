@@ -2123,9 +2123,16 @@ window.abrirExportSecullum=function(admId){
 };
 window.gerarArquivoSecullum=function(){
   const g=id=>document.getElementById(id)?.value?.trim()||"";
-  const norm=v=>v.toUpperCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/[^\x00-\x7F]/g,'');
+  const norm=v=>v.toUpperCase().normalize('NFD').replace(/[̀-ͯ]/g,'').replace(/[^ -]/g,'');
   if(!g("sx-nfolha")||!g("sx-nident")){toast("Preencha Nº Folha e Nº Identificador.","er");return;}
-  const linha=[g("sx-nfolha"),g("sx-nident"),norm(g("sx-nome")),g("sx-cnpj"),g("sx-cpf"),g("sx-adm"),norm(g("sx-func")),norm(g("sx-hor")),norm(g("sx-dept")),norm(g("sx-estr"))].join(";");
+  // Data admissão garantida em DD/MM/AAAA
+  const admRaw=g("sx-adm");
+  let admFmt=admRaw;
+  if(admRaw.match(/^\d{4}-\d{2}-\d{2}$/)){const p=admRaw.split("-");admFmt=p[2]+"/"+p[1]+"/"+p[0];}
+  // Campo Demissão vazio para funcionários ativos
+  const demissao="";
+  // Ordem: NºFolha;NºIdent;Nome;CNPJ;CPF;Admissão;Demissão;Função;Horário;Departamento;Estrutura
+  const linha=[g("sx-nfolha"),g("sx-nident"),norm(g("sx-nome")),g("sx-cnpj"),g("sx-cpf"),admFmt,demissao,norm(g("sx-func")),norm(g("sx-hor")),norm(g("sx-dept")),norm(g("sx-estr"))].join(";");
   const blob=new Blob([linha+"\n"],{type:"text/plain;charset=utf-8"});
   const url=URL.createObjectURL(blob);
   const el=document.createElement("a");el.href=url;el.download="secullum_"+norm(g("sx-nome")).replace(/\s+/g,"_")+".txt";el.click();
