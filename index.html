@@ -1121,10 +1121,9 @@ function renderAdms(){
         <div style="font-size:11px;color:var(--txt3);margin:3px 0">${a.dataAdm?new Date(a.dataAdm+'T00:00').toLocaleDateString('pt-BR'):''} ${a.tipoContrato?'· '+a.tipoContrato:''}</div>
         <div class="prog-wrap"><div class="prog-bar" style="width:${p.pct}%"></div></div>
         <div class="prog-lbl"><span>${p.done}/${p.total} etapas</span><span>${p.pct}%</span></div>
+        <div style="display:flex;flex-wrap:wrap;gap:4px;margin-top:8px">${STEPS.map(s=>{const d=s.itens.every(i=>a.checks&&a.checks[i.id]);return`<span class="spill ${d?'spd':'spp'}">${s.label.split(' ')[0]}</span>`;}).join('')}</div>
       </div>
     </div>
-  </div>`;
-    <div style="display:flex;flex-wrap:wrap;gap:4px;margin-top:8px">${STEPS.map(s=>{const d=s.itens.every(i=>a.checks&&a.checks[i.id]);return`<span class="spill ${d?'spd':'spp'}">${s.label.split(' ')[0]}</span>`;}).join('')}</div>
   </div>`;}).join('');
 }
 
