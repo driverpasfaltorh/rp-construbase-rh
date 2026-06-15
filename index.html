@@ -2161,7 +2161,11 @@ function montarArquivoVR(adms, params){
   // 00 — Header
   add('00'+'011'+cnpj+padR('RP CONSTRUBASE',40)+''.padEnd(282,' '));
 
-  // 50 — Produto Voucher (antes dos beneficiários)
+  // 11 — Associação de CNPJ ao Local de Entrega (obrigatório)
+  // TipoReg(2)+CNPJ(14)+CodLE(30)+CNPJ_Empresa(14)+FillER(281)
+  add('11'+cnpj+codLE+cnpj+''.padEnd(281,' '));
+
+  // 50 — Produto Voucher
   add('50'+cnpj+prod+dataAgend+''.padEnd(314,' '));
 
   // 30 + 60 — Beneficiário e Benefício por funcionário
