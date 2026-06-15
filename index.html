@@ -1364,7 +1364,7 @@ window.salvarCfgItem=async function(){
       data.criadoEm=new Date().toISOString();
       let docId;
       if(col==='documentos'&&data.nome){
-        docId=data.nome.toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g,'').replace(/[^a-z0-9]+/g,'_').replace(/^_|_$/g,'').slice(0,30);
+        docId=data.nome.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/[^a-z0-9]+/g,'_').replace(/^_|_$/g,'').slice(0,30);
         data.id=docId;
         const url=`https://firestore.googleapis.com/v1/projects/${proj}/databases/(default)/documents/${col}/${docId}`;
         const resp=await fetch(url,{method:'PATCH',headers,body:JSON.stringify({fields:toFsFields(data)})});
@@ -2135,7 +2135,7 @@ window.gerarArquivoSecullum=function(){
 };
 
 // VR PAT
-function normVR(v){return(v||'').toUpperCase().normalize('NFD').replace(/[̀-ͯ]/g,'').replace(/[^ -]/g,'');}
+function normVR(v){return(v||'').toUpperCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/[^\x00-\x7F]/g,'');}
 function padR(v,n){const s=normVR(String(v||''));return s.slice(0,n).padEnd(n,' ');}
 function padL(v,n){const s=String(v||'').replace(/\D/g,'');return s.slice(0,n).padStart(n,'0');}
 
