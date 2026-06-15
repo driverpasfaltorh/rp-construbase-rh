@@ -2127,7 +2127,8 @@ window.gerarArquivoSecullum=function(){
   const admRaw=g("sx-adm");
   let admFmt=admRaw;
   if(/^\d{4}-\d{2}-\d{2}$/.test(admRaw)){const p=admRaw.split("-");admFmt=p[2]+"/"+p[1]+"/"+p[0];}
-  const linha=[g("sx-nfolha"),g("sx-nident"),norm(g("sx-nome")),g("sx-cnpj"),g("sx-cpf"),admFmt,"",norm(g("sx-func")),norm(g("sx-hor")),norm(g("sx-dept")),norm(g("sx-estr"))].join(";");
+  // Sem campo Demissão — Secullum rejeita campo vazio
+  const linha=[g("sx-nfolha"),g("sx-nident"),norm(g("sx-nome")),g("sx-cnpj"),g("sx-cpf"),admFmt,norm(g("sx-func")),norm(g("sx-hor")),norm(g("sx-dept")),norm(g("sx-estr"))].join(";");
   const blob=new Blob([linha+"\n"],{type:"text/plain;charset=utf-8"});
   const url=URL.createObjectURL(blob);
   const el=document.createElement("a");el.href=url;el.download="secullum_"+norm(g("sx-nome")).replace(/\s+/g,"_")+".txt";el.click();
