@@ -1564,6 +1564,7 @@ const PERGUNTAS_BANCO = {
 // ============================================================
 let vagas = [];
 let vagaEditId = null;
+let vrLoteIds = [];
 let perguntasVaga = [];
 
 function iniciarListenerVagas(){
@@ -2237,31 +2238,31 @@ window.atualizarBtnVR=function(){
 };
 
 window.exportarVRLote=function(){
-  const ids=[...document.querySelectorAll('.adm-sel-cb:checked')].map(cb=>cb.dataset.id);
-  if(!ids.length){toast('Selecione ao menos uma admissão.','er');return;}
-  const empCfg=cfg.empresas.find(e=>e.nome===admissoes.find(x=>x.id===ids[0])?.empresa)||{};
+  vrLoteIds=[...document.querySelectorAll('.adm-sel-cb:checked')].map(cb=>cb.dataset.id);
+  if(!vrLoteIds.length){toast('Selecione ao menos uma admissão.','er');return;}
+  const empCfg=cfg.empresas.find(e=>e.nome===admissoes.find(x=>x.id===vrLoteIds[0])?.empresa)||{};
   const cnpj=(empCfg.cnpj||'').replace(/\D/g,'');
   const prev=document.getElementById('modal-vr-lote');if(prev)prev.remove();
   const html=`<div id="modal-vr-lote" class="modal-ov open"><div class="modal" style="max-width:500px">
-    <div class="modal-hdr"><span class="modal-title">Exportar VR PAT — ${ids.length} funcionário${ids.length>1?'s':''}</span><button class="modal-x" onclick="closeModal('modal-vr-lote')">×</button></div>
+    <div class="modal-hdr"><span class="modal-title">Exportar VR PAT — ${vrLoteIds.length} funcionário${vrLoteIds.length>1?'s':''}</span><button class="modal-x" onclick="closeModal('modal-vr-lote')">×</button></div>
     <p style="font-size:12px;color:var(--txt2);margin-bottom:12px">Os campos abaixo serão aplicados a todos os selecionados.</p>
     <div class="fg"><label>CNPJ da empresa (só números) *</label><input type="text" id="vrl-cnpj" value="${cnpj}" placeholder="00000000000000"></div>
-    <div class="fg"><label>Código local de entrega *</label><input type="text" id="vrl-le" placeholder="Ex: MOGIGUACU01"></div>
-    <div class="fg"><label>Nome do local de entrega *</label><input type="text" id="vrl-le-nome" placeholder="Ex: Mogi Guaçu - Sede"></div>
+    <div class="fg"><label>Código local de entrega *</label><input type="text" id="vrl-le" placeholder="Ex: 05"></div>
     <div class="g2">
       <div class="fg"><label>Data agendamento (DDMMAAAA) *</label><input type="text" id="vrl-data" placeholder="01072026"></div>
       <div class="fg"><label>Valor benefício (R$)</label><input type="text" id="vrl-valor" value="0"></div>
     </div>
     <div class="fg"><label>Código do produto</label><input type="text" id="vrl-prod" value="AXM"></div>
     <div class="btn-row" style="margin-top:1rem">
-      <button class="btn btn-p" onclick="gerarVRLote(${JSON.stringify(ids)})" style="background:#e8005a;border-color:#e8005a">⬇ Baixar arquivo .txt</button>
+      <button class="btn btn-p" onclick="gerarVRLote()" style="background:#e8005a;border-color:#e8005a">⬇ Baixar arquivo .txt</button>
       <button class="btn" onclick="closeModal('modal-vr-lote')">Cancelar</button>
     </div>
   </div></div>`;
   document.body.insertAdjacentHTML('beforeend',html);
 };
 
-window.gerarVRLote=function(ids){
+window.gerarVRLote=function(){
+  const ids=vrLoteIds;
   const cnpj=document.getElementById('vrl-cnpj')?.value.trim();
   const le=document.getElementById('vrl-le')?.value.trim();
   const data=document.getElementById('vrl-data')?.value.trim();
