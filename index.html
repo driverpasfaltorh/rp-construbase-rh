@@ -322,6 +322,8 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
         <button class="tab-btn" onclick="cfgTab('origens',this)">Origens</button>
         <button class="tab-btn" onclick="cfgTab('tiposcontrato',this)">Contratos</button>
         <button class="tab-btn" onclick="cfgTab('obras',this)">Obras</button>
+        <button class="tab-btn" onclick="cfgTab('horarios',this)">Horários</button>
+        <button class="tab-btn" onclick="cfgTab('departamentos',this)">Departamentos</button>
         <button class="tab-btn" onclick="cfgTab('competencias',this)">Competências</button>
         <button class="tab-btn" onclick="cfgTab('documentos',this)">Documentos</button>
       </div>
@@ -351,7 +353,9 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
   <div class="g2"><div class="fg"><label>Cargo CLT *</label><select id="ma-cargo"><option value="">—</option></select></div><div class="fg"><label>Tipo de contrato *</label><select id="ma-tipo"><option value="">—</option></select></div></div>
   <div class="g2"><div class="fg"><label>Salário contratual *</label><input type="text" id="ma-sal" placeholder="R$ 0.000,00"></div><div class="fg"><label>Data de admissão *</label><input type="date" id="ma-data"></div></div>
   <div class="g2"><div class="fg"><label>Empresa *</label><select id="ma-emp"><option value="">—</option></select></div><div class="fg"><label>Obra / Local</label><select id="ma-obra"><option value="">—</option></select></div></div>
-  <div class="g2"><div class="fg"><label>Horário</label><input type="text" id="ma-horario" placeholder="07:00–17:00 / seg–sex"></div><div class="fg"><label>Alojado?</label><select id="ma-aloj" onchange="tAloj()"><option value="nao">Não</option><option value="sim">Sim</option></select></div></div>
+  <div class="g3"><div class="fg"><label>Horário</label><select id="ma-horario"><option value="">—</option></select></div><div class="fg"><label>Departamento</label><select id="ma-dept"><option value="">—</option></select></div><div class="fg"><label>Estrutura</label><input type="text" id="ma-estrutura" placeholder="Ex: Equipe A, Obra SP-261..."></div></div>
+  <div class="g2"><div class="fg"><label>Nº Folha</label><input type="text" id="ma-nfolha" placeholder="Ex: 001"></div><div class="fg"><label>Nº Identificador</label><input type="text" id="ma-nident" placeholder="Ex: 001"></div></div>
+  <div class="g2"><div class="fg"><label>Alojado?</label><select id="ma-aloj" onchange="tAloj()"><option value="nao">Não</option><option value="sim">Sim</option></select></div><div class="fg"></div></div>
   <div id="ma-aloj-det" style="display:none"><div class="g3"><div class="fg"><label>ID Alojamento</label><input type="text" id="ma-alojid"></div><div class="fg"><label>Quarto nº</label><input type="text" id="ma-quarto"></div><div class="fg"><label>Cama nº</label><input type="text" id="ma-cama"></div></div></div>
   <div class="btn-row"><button class="btn btn-p" onclick="criarAdm()">Criar checklist</button><button class="btn" onclick="closeModal('modal-adm')">Cancelar</button></div>
 </div></div>
@@ -591,7 +595,7 @@ async function iniciarApp(){
 }
 
 async function carregarCfg(){
-  const cols=['cargos','empresas','origens','tiposcontrato','obras','competencias','documentos'];
+  const cols=['cargos','empresas','origens','tiposcontrato','obras','competencias','documentos','horarios','departamentos'];
   for(const col of cols){try{const snap=await getDocs(collection(db,col));cfg[col]=snap.docs.map(d=>({id:d.id,...d.data()}));}catch(e){cfg[col]=[];}}
   if(cfg.cargos.length===0)await popularDefaults();
   // Migrar documentos que não têm campo 'id' fixo (IDs gerados pelo addDoc)
@@ -702,6 +706,10 @@ function popularSelects(){
   ['c-tipo','ma-tipo'].forEach(id=>{const el=document.getElementById(id);if(!el)return;while(el.options.length>1)el.remove(1);cfg.tiposcontrato.forEach(t=>{const o=document.createElement('option');o.value=t.nome;o.textContent=t.nome;el.appendChild(o);});});
   // obras
   const mo=document.getElementById('ma-obra');if(mo){while(mo.options.length>1)mo.remove(1);cfg.obras.forEach(o=>{const op=document.createElement('option');op.value=o.nome;op.textContent=o.nome+(o.local?' — '+o.local:'');mo.appendChild(op);});}
+  // horarios
+  const mh=document.getElementById('ma-horario');if(mh){while(mh.options.length>1)mh.remove(1);(cfg.horarios||[]).forEach(h=>{const op=document.createElement('option');op.value=h.nome;op.textContent=h.nome;mh.appendChild(op);});}
+  // departamentos
+  const md=document.getElementById('ma-dept');if(md){while(md.options.length>1)md.remove(1);(cfg.departamentos||[]).forEach(d=>{const op=document.createElement('option');op.value=d.nome;op.textContent=d.nome;md.appendChild(op);});}
 }
 
 function iniciarListeners(){
@@ -1128,7 +1136,7 @@ window.criarAdm=async function(){
   const data=document.getElementById('ma-data').value;const emp=document.getElementById('ma-emp').value;
   if(!cid||!cargo||!sal||!data||!emp){toast('Preencha os campos obrigatórios.','er');return;}
   const c=candidatos.find(x=>x.id===cid);
-  const adm={candidatoId:cid,nome:c?.nome||'',cargo,tipoContrato:tipo,salario:sal,dataAdm:data,empresa:emp,obra:document.getElementById('ma-obra').value,horario:document.getElementById('ma-horario').value,alojado:document.getElementById('ma-aloj').value==='sim',alojId:document.getElementById('ma-alojid').value,quarto:document.getElementById('ma-quarto').value,cama:document.getElementById('ma-cama').value,checks:{},bloqueado:false,criadoEm:new Date().toISOString(),criadoPor:CU?.email};
+  const adm={candidatoId:cid,nome:c?.nome||'',cargo,tipoContrato:tipo,salario:sal,dataAdm:data,empresa:emp,obra:document.getElementById('ma-obra').value,horario:document.getElementById('ma-horario').value,departamento:document.getElementById('ma-dept').value,estrutura:document.getElementById('ma-estrutura').value,nfolha:document.getElementById('ma-nfolha').value,nident:document.getElementById('ma-nident').value,alojado:document.getElementById('ma-aloj').value==='sim',alojId:document.getElementById('ma-alojid').value,quarto:document.getElementById('ma-quarto').value,cama:document.getElementById('ma-cama').value,checks:{},bloqueado:false,criadoEm:new Date().toISOString(),criadoPor:CU?.email};
   try{
     const ref=await addDoc(collection(db,'admissoes'),adm);
     await updateDoc(doc(db,'candidatos',cid),{status:'contratado',atualizadoEm:new Date().toISOString()});
@@ -1197,6 +1205,7 @@ window.abrirAdm=async function(id){
       ${c?`<button class="btn btn-sm" onclick="abrirCand('${c.id}')">Ver dados do candidato</button>`:''}
       ${linkDocs}
       <button class="btn btn-sm btn-s" onclick="gerarSST('${id}')">📧 Gerar ordem SST</button>
+      <button class="btn btn-sm" onclick="abrirExportSecullum('${id}')" style="background:var(--blue);color:#fff;border-color:var(--blue)">📄 Exportar Secullum</button>
       <button class="btn btn-sm btn-d" onclick="window.excluirAdmissao('${id}')">🗑 Excluir checklist</button>
     </div>
     <div class="card" style="margin-bottom:1rem">
@@ -1290,7 +1299,9 @@ window.delCfgItem=async function(col,id){if(!confirm('Excluir este item?'))retur
 
 function buildCfgForm(col,item){
   if(col==='cargos')return`<div class="fg" style="margin-bottom:10px"><label>Nome do cargo *</label><input type="text" id="mci-nome" value="${item?.nome||''}"></div><div class="g2"><div class="fg"><label>Perfil</label><select id="mci-perfil"><option value="operacional" ${item?.perfil==='operacional'?'selected':''}>Operacional</option><option value="tecnico" ${item?.perfil==='tecnico'?'selected':''}>Técnico/Adm</option></select></div><div class="fg"><label>CBO</label><input type="text" id="mci-cbo" value="${item?.cbo||''}" placeholder="000000"></div></div>`;
-  if(col==='empresas')return`<div class="fg" style="margin-bottom:10px"><label>Nome *</label><input type="text" id="mci-nome" value="${item?.nome||''}"></div><div class="fg"><label>Cidade/UF</label><input type="text" id="mci-cidade" value="${item?.cidade||''}"></div>`;
+  if(col==='empresas')return`<div class="fg" style="margin-bottom:10px"><label>Nome *</label><input type="text" id="mci-nome" value="${item?.nome||''}"></div><div class="fg" style="margin-bottom:10px"><label>CNPJ</label><input type="text" id="mci-cnpj" value="${item?.cnpj||''}" placeholder="00.000.000/0000-00"></div><div class="fg"><label>Cidade/UF</label><input type="text" id="mci-cidade" value="${item?.cidade||''}"></div>`;
+  if(col==='horarios')return`<div class="fg" style="margin-bottom:10px"><label>Nome do horário *</label><input type="text" id="mci-nome" value="${item?.nome||''}" placeholder="Ex: 07h00–17h00 Seg–Sex"></div><div class="fg"><label>Descrição</label><input type="text" id="mci-desc" value="${item?.descricao||''}" placeholder="Ex: Jornada padrão de obras"></div>`;
+  if(col==='departamentos')return`<div class="fg"><label>Nome do departamento *</label><input type="text" id="mci-nome" value="${item?.nome||''}" placeholder="Ex: Operacional, Administrativo..."></div>`;
   if(col==='competencias')return`<div class="fg" style="margin-bottom:10px"><label>Categoria *</label><input type="text" id="mci-cat" value="${item?.categoria||''}" placeholder="Ex: Máquinas operadas"></div><div class="fg" style="margin-bottom:10px"><label>Perfil</label><select id="mci-perfil"><option value="operacional" ${item?.perfil==='operacional'?'selected':''}>Operacional</option><option value="tecnico" ${item?.perfil==='tecnico'?'selected':''}>Técnico/Adm</option><option value="" ${!item?.perfil?'selected':''}>Ambos</option></select></div><div class="fg"><label>Tags (uma por linha) *</label><textarea id="mci-tags" rows="6" placeholder="Tag 1&#10;Tag 2">${(item?.tags||[]).join('\n')}</textarea></div>`;
   if(col==='obras')return`<div class="fg" style="margin-bottom:10px"><label>Nome da obra *</label><input type="text" id="mci-nome" value="${item?.nome||''}"></div><div class="fg"><label>Local / endereço</label><input type="text" id="mci-local" value="${item?.local||''}"></div>`;
   if(col==='documentos')return`<div class="fg" style="margin-bottom:10px"><label>Nome do documento *</label><input type="text" id="mci-nome" value="${item?.nome||''}" placeholder="Ex: RG (frente e verso)"></div><div class="fg" style="margin-bottom:10px"><label>Instrução para o candidato</label><input type="text" id="mci-hint" value="${item?.hint||''}" placeholder="Ex: Documento de identidade"></div><div class="fg" style="margin-bottom:10px"><label>Obrigatoriedade</label><select id="mci-obr"><option value="true" ${item?.obrigatorio!==false?'selected':''}>Obrigatório</option><option value="false" ${item?.obrigatorio===false?'selected':''}>Opcional</option></select></div><div class="fg"><label>Ordem de exibição</label><input type="number" id="mci-ordem" value="${item?.ordem||99}" min="1"></div>`;
@@ -1301,7 +1312,9 @@ function buildCfgForm(col,item){
 window.salvarCfgItem=async function(){
   const col=cfgEditCol;let data={};
   if(col==='cargos')data={nome:document.getElementById('mci-nome')?.value.trim(),perfil:document.getElementById('mci-perfil')?.value,cbo:document.getElementById('mci-cbo')?.value.trim()};
-  else if(col==='empresas')data={nome:document.getElementById('mci-nome')?.value.trim(),cidade:document.getElementById('mci-cidade')?.value.trim()};
+  else if(col==='empresas')data={nome:document.getElementById('mci-nome')?.value.trim(),cnpj:document.getElementById('mci-cnpj')?.value.trim(),cidade:document.getElementById('mci-cidade')?.value.trim()};
+  else if(col==='horarios')data={nome:document.getElementById('mci-nome')?.value.trim(),descricao:document.getElementById('mci-desc')?.value.trim()};
+  else if(col==='departamentos')data={nome:document.getElementById('mci-nome')?.value.trim()};
   else if(col==='competencias')data={categoria:document.getElementById('mci-cat')?.value.trim(),perfil:document.getElementById('mci-perfil')?.value,tags:(document.getElementById('mci-tags')?.value||'').split('\n').map(t=>t.trim()).filter(Boolean)};
   else if(col==='obras')data={nome:document.getElementById('mci-nome')?.value.trim(),local:document.getElementById('mci-local')?.value.trim()};
   else if(col==='documentos')data={nome:document.getElementById('mci-nome')?.value.trim(),hint:document.getElementById('mci-hint')?.value.trim(),obrigatorio:document.getElementById('mci-obr')?.value==='true',ordem:parseInt(document.getElementById('mci-ordem')?.value)||99};
@@ -2055,6 +2068,28 @@ window.closeModal=function(id){document.getElementById(id).classList.remove('ope
 window.toast=function(msg,tipo=''){const t=document.getElementById('toast');t.textContent=msg;t.className='toast show'+(tipo?' '+tipo:'');setTimeout(()=>t.className='toast',3000);};
 function toast(m,t){window.toast(m,t);}
 
+
+// EXPORTAÇÃO SECULLUM
+window.abrirExportSecullum=function(admId){
+  const a=admissoes.find(x=>x.id===admId);if(!a)return;
+  const c=candidatos.find(x=>x.id===a.candidatoId)||{};
+  const empCfg=cfg.empresas.find(e=>e.nome===a.empresa)||{};
+  const cnpj=(empCfg.cnpj||"").replace(/\D/g,"");
+  const cpf=(c.cpf||"").replace(/\D/g,"");
+  const admFmt=a.dataAdm?a.dataAdm.split("-").reverse().join("/"):"";
+  const prev=document.getElementById("modal-secullum");if(prev)prev.remove();
+  const html=`<div id="modal-secullum" class="modal-ov open"><div class="modal" style="max-width:520px"><div class="modal-hdr"><span class="modal-title">Exportar para Secullum</span><button class="modal-x" onclick="closeModal(47modal-secullum47)">×</button></div><p style="font-size:13px;color:var(--txt2);margin-bottom:1rem">Confira e preencha os campos antes de gerar o arquivo. Separador: <strong>ponto e vírgula (;)</strong>.</p><div class="g2"><div class="fg"><label>Nº Folha *</label><input type="text" id="sx-nfolha" value="${a.nfolha||""}"></div><div class="fg"><label>Nº Identificador *</label><input type="text" id="sx-nident" value="${a.nident||""}"></div></div><div class="fg"><label>Nome</label><input type="text" id="sx-nome" value="${a.nome||c.nome||""}" readonly style="background:var(--bg)"></div><div class="g2"><div class="fg"><label>CNPJ Empresa (só números)</label><input type="text" id="sx-cnpj" value="${cnpj}" placeholder="00000000000000"></div><div class="fg"><label>CPF (só números)</label><input type="text" id="sx-cpf" value="${cpf}" readonly style="background:var(--bg)"></div></div><div class="fg"><label>Data Admissão (DD/MM/AAAA)</label><input type="text" id="sx-adm" value="${admFmt}"></div><div class="g2"><div class="fg"><label>Função</label><input type="text" id="sx-func" value="${a.cargo||""}"></div><div class="fg"><label>Horário</label><input type="text" id="sx-hor" value="${a.horario||""}"></div></div><div class="g2"><div class="fg"><label>Departamento</label><input type="text" id="sx-dept" value="${a.departamento||""}"></div><div class="fg"><label>Estrutura</label><input type="text" id="sx-estr" value="${a.estrutura||""}"></div></div><div class="btn-row" style="margin-top:1rem"><button class="btn btn-p" onclick="gerarArquivoSecullum()">⬇ Baixar .txt</button><button class="btn" onclick="closeModal(47modal-secullum47)">Cancelar</button></div></div></div>`;
+  document.body.insertAdjacentHTML("beforeend",html);
+};
+window.gerarArquivoSecullum=function(){
+  const g=id=>document.getElementById(id)?.value?.trim()||"";
+  if(!g("sx-nfolha")||!g("sx-nident")){toast("Preencha Nº Folha e Nº Identificador.","er");return;}
+  const linha=[g("sx-nfolha"),g("sx-nident"),g("sx-nome"),g("sx-cnpj"),g("sx-cpf"),g("sx-adm"),g("sx-func"),g("sx-hor"),g("sx-dept"),g("sx-estr")].join(";");
+  const blob=new Blob([linha+"\n"],{type:"text/plain;charset=utf-8"});
+  const url=URL.createObjectURL(blob);
+  const el=document.createElement("a");el.href=url;el.download="secullum_"+g("sx-nome").replace(/\s+/g,"_")+".txt";el.click();
+  URL.revokeObjectURL(url);toast("Arquivo gerado!","ok");closeModal("modal-secullum");
+};
 // INIT
 (function(){
   const token=sessionStorage.getItem('fb_token');const email=sessionStorage.getItem('fb_email');const uid=sessionStorage.getItem('fb_uid');
