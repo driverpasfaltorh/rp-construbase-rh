@@ -245,7 +245,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
       <div class="g3"><div class="fg"><label>Chave PIX</label><input type="text" id="c-pix"></div><div class="fg"><label>Óculos de grau?</label><select id="c-oculos"><option value="">—</option><option value="nao">Não</option><option value="sim">Sim</option></select></div><div class="fg"><label>Camisa</label><select id="c-camisa"><option value="">—</option><option>PP</option><option>P</option><option>M</option><option>G</option><option>GG</option><option>XGG</option></select></div></div>
       <div class="g2"><div class="fg"><label>Tamanho calça</label><input type="text" id="c-calca" placeholder="38, 40..."></div><div class="fg"><label>Nº calçado segurança</label><input type="text" id="c-calcado" placeholder="40, 42..."></div></div>
       <div class="sec-hdr"><div class="sd dg">5</div><span class="sec-lbl">Vaga e origem</span></div>
-      <div class="g2"><div class="fg"><label>Cargo pretendido *</label><select id="c-cargo" onchange="onCargoChange()"><option value="">Selecione...</option></select></div><div class="fg"><label>Origem *</label><select id="c-origem"><option value="">—</option></select></div></div>
+      <div class="g2"><div class="fg"><label>Cargo pretendido *</label><input type="text" id="c-cargo" list="cargo-list" placeholder="Digite ou selecione..." onchange="onCargoChange()" oninput="onCargoChange()"><datalist id="cargo-list"></datalist></div><div class="fg"><label>Origem *</label><select id="c-origem"><option value="">—</option></select></div></div>
       <div class="g3"><div class="fg"><label>Tipo de contrato pretendido</label><select id="c-tipo"><option value="">—</option></select></div><div class="fg"><label>Status</label><select id="c-status"><option value="disponivel">Disponível</option><option value="processo">Em processo</option><option value="contratado">Contratado</option><option value="descartado">Descartado</option></select></div><div class="fg"><label>Empresa de interesse</label><select id="c-empresa"><option value="qualquer">Qualquer empresa</option></select></div></div>
       <div class="fg" style="margin-bottom:10px"><label>Pretensão salarial</label><input type="text" id="c-sal" placeholder="R$ 0.000,00" style="max-width:200px"></div>
       <div class="sec-hdr"><div class="sd dt">6</div><span class="sec-lbl">Competências</span></div>
@@ -686,20 +686,11 @@ async function popularDefaults(){
 
 function popularSelects(){
   // cargos
-  ['c-cargo','ma-cargo'].forEach(id=>{
-    const el=document.getElementById(id);if(!el)return;
-    const v=el.value;while(el.options.length>1)el.remove(1);
-    let cur='';
-    cfg.cargos.forEach(c=>{
-      if(c.perfil!==cur){
-        if(cur)el.innerHTML+='</optgroup>';
-        el.innerHTML+=`<optgroup label="${c.perfil==='operacional'?'Operacional':'Técnico / Administrativo'}">`;
-        cur=c.perfil;
-      }
-      const o=document.createElement('option');o.value=c.nome;o.textContent=c.nome;el.appendChild(o);
-    });
-    if(v)el.value=v;
-  });
+  // c-cargo agora é input+datalist; ma-cargo ainda é select
+  const maCargoEl=document.getElementById('ma-cargo');
+  if(maCargoEl){const v=maCargoEl.value;while(maCargoEl.options.length>1)maCargoEl.remove(1);let cur='';cfg.cargos.forEach(c=>{if(c.perfil!==cur){if(cur)maCargoEl.innerHTML+='</optgroup>';maCargoEl.innerHTML+=`<optgroup label="${c.perfil==='operacional'?'Operacional':'Técnico / Administrativo'}">`;cur=c.perfil;}const o=document.createElement('option');o.value=c.nome;o.textContent=c.nome;maCargoEl.appendChild(o);});if(v)maCargoEl.value=v;}
+  const cargoList=document.getElementById('cargo-list');
+  if(cargoList){cargoList.innerHTML='';cfg.cargos.forEach(c=>{const o=document.createElement('option');o.value=c.nome;cargoList.appendChild(o);});}
   const fbc=document.getElementById('fb-cargo');
   if(fbc){while(fbc.options.length>1)fbc.remove(1);cfg.cargos.forEach(c=>{const o=document.createElement('option');o.value=c.nome;o.textContent=c.nome;fbc.appendChild(o);});}
   // empresas
