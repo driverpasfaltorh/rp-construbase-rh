@@ -250,6 +250,7 @@ async function fsGetList(col){
   const d=await r.json();
   return(d.documents||[]).map(x=>({id:x.name.split('/').pop(),...fsParse(x.fields)}));
 }
+const fsGetDocs=fsGetList; // alias para compatibilidade
 async function fsUpdate(col,id,obj){
   const fields=fsSerial(obj);
   const mask=Object.keys(fields).map(k=>'updateMask.fieldPaths='+encodeURIComponent(k)).join('&');
