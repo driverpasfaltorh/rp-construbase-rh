@@ -2148,10 +2148,8 @@ function gerarLinhaVR(campos){
 }
 
 function montarArquivoVR(adms, params){
-  // params: {cnpjCliente, codLocalEntrega, nomeLocalEntrega, dataAgend, valorBenef, codProduto}
   const cnpj=padL(params.cnpjCliente,14);
   const codLE=padR(params.codLocalEntrega,30);
-  const nomeLE=padR(normVR(params.nomeLocalEntrega||params.codLocalEntrega||''),80);
   const prod=padR(params.codProduto||'AXM',3);
   const dataAgend=(params.dataAgend||'').replace(/\D/g,'').slice(0,8).padStart(8,'0');
   const valor=params.valorBenef?String(Math.round(parseFloat(params.valorBenef)*100)).padStart(11,'0'):'00000000000';
@@ -2162,14 +2160,10 @@ function montarArquivoVR(adms, params){
   // 00 — Header
   add('00'+'011'+cnpj+padR('RP CONSTRUBASE',40)+''.padEnd(282,' '));
 
-  // 10 — Local de Entrega (obrigatório antes do Beneficiário)
-  // TipoRec(2)+CNPJ(14)+CodLE(30)+NomeLE(80)+TipoLogr(20)+Logr(40)+Num(6)+Comp(20)+Bairro(30)+Cidade(30)+UF(2)+CEP(8)+NomeInterl(30)+FILLER(29)
-  add('10'+cnpj+codLE+nomeLE+padR('',20)+padR('',40)+padL('',6)+padR('',20)+padR('',30)+padR('',30)+padR('',2)+padL('',8)+padR('',30)+''.padEnd(29,' '));
-
-  // 50 — Produto Voucher
+  // 50 — Produto Voucher (antes dos beneficiários)
   add('50'+cnpj+prod+dataAgend+''.padEnd(314,' '));
 
-  // 30 + 60 — Beneficiário e Benefício
+  // 30 + 60 — Beneficiário e Benefício por funcionário
   adms.forEach(({a,c})=>{
     const cpf=padL((c.cpf||'').replace(/\D/g,''),11);
     const matricula=padR(a.nfolha||'',10);
