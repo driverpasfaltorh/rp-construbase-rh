@@ -306,7 +306,15 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
           <div class="fg"><label>Status</label><select id="fil-adm" onchange="renderAdms()"><option value="">Todos</option><option value="andamento">Em andamento</option><option value="concluido">Concluído</option></select></div>
           <div class="fg"><label>Empresa</label><select id="fil-adm-emp" onchange="renderAdms()"><option value="">Todas</option></select></div>
         </div>
-        <div class="res-count" id="adm-count"></div>
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
+          <div class="res-count" id="adm-count"></div>
+          <div style="display:flex;gap:8px;align-items:center">
+            <label style="font-size:12px;color:var(--txt2);display:flex;align-items:center;gap:4px;cursor:pointer">
+              <input type="checkbox" id="adm-sel-all" onchange="toggleTodosAdm(this.checked)" style="width:14px;height:14px"> Selecionar todos
+            </label>
+            <button class="btn btn-sm" onclick="exportarVRLote()" style="background:#e8005a;color:#fff;border-color:#e8005a;display:none" id="btn-vr-lote">🟢 Exportar VR PAT selecionados</button>
+          </div>
+        </div>
         <div id="adm-grid" class="adm-grid"></div>
       </div>
       <div id="adm-det-v" style="display:none"></div>
@@ -1104,12 +1112,18 @@ function renderAdms(){
   let res=admissoes.filter(a=>(!fil||stAdm(a)===fil)&&(!emp||a.empresa===emp));
   document.getElementById('adm-count').textContent=`${res.length} admissão${res.length!==1?'ões':''} encontrada${res.length!==1?'s':''}`;
   document.getElementById('adm-grid').innerHTML=`<div class="adm-new" onclick="abrirModalAdm()"><span style="font-size:13px;color:var(--txt3)">+ Nova admissão</span></div>`+
-  res.map(a=>{const p=progAdm(a);const st=stAdm(a);return`<div class="card card-c" onclick="abrirAdm('${a.id}')">
-    <div class="card-top"><div><div class="card-name">${a.nome}</div><div class="card-sub">${a.cargo} · ${a.empresa}</div></div>
-    <span class="badge b-${st==='andamento'?'and':st==='concluido'?'conc':'desc'}">${st==='andamento'?'Em andamento':st==='concluido'?'Concluído':'Bloqueado'}</span></div>
-    <div style="font-size:11px;color:var(--txt3);margin:3px 0">${a.dataAdm?new Date(a.dataAdm+'T00:00').toLocaleDateString('pt-BR'):''} ${a.tipoContrato?'· '+a.tipoContrato:''}</div>
-    <div class="prog-wrap"><div class="prog-bar" style="width:${p.pct}%"></div></div>
-    <div class="prog-lbl"><span>${p.done}/${p.total} etapas</span><span>${p.pct}%</span></div>
+  res.map(a=>{const p=progAdm(a);const st=stAdm(a);return`<div class="card" style="cursor:default;position:relative">
+    <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:4px">
+      <input type="checkbox" class="adm-sel-cb" data-id="${a.id}" style="width:15px;height:15px;margin-top:2px;cursor:pointer;flex-shrink:0" onclick="event.stopPropagation();atualizarBtnVR()" title="Selecionar para exportação">
+      <div style="flex:1;margin:0 8px;cursor:pointer" onclick="abrirAdm('${a.id}')">
+        <div class="card-top" style="margin-bottom:2px"><div><div class="card-name">${a.nome}</div><div class="card-sub">${a.cargo} · ${a.empresa}</div></div>
+        <span class="badge b-${st==='andamento'?'and':st==='concluido'?'conc':'desc'}">${st==='andamento'?'Em andamento':st==='concluido'?'Concluído':'Bloqueado'}</span></div>
+        <div style="font-size:11px;color:var(--txt3);margin:3px 0">${a.dataAdm?new Date(a.dataAdm+'T00:00').toLocaleDateString('pt-BR'):''} ${a.tipoContrato?'· '+a.tipoContrato:''}</div>
+        <div class="prog-wrap"><div class="prog-bar" style="width:${p.pct}%"></div></div>
+        <div class="prog-lbl"><span>${p.done}/${p.total} etapas</span><span>${p.pct}%</span></div>
+      </div>
+    </div>
+  </div>`;
     <div style="display:flex;flex-wrap:wrap;gap:4px;margin-top:8px">${STEPS.map(s=>{const d=s.itens.every(i=>a.checks&&a.checks[i.id]);return`<span class="spill ${d?'spd':'spp'}">${s.label.split(' ')[0]}</span>`;}).join('')}</div>
   </div>`;}).join('');
 }
@@ -1206,6 +1220,7 @@ window.abrirAdm=async function(id){
       ${linkDocs}
       <button class="btn btn-sm btn-s" onclick="gerarSST('${id}')">📧 Gerar ordem SST</button>
       <button class="btn btn-sm" onclick="abrirExportSecullum('${id}')" style="background:var(--blue);color:#fff;border-color:var(--blue)">📄 Exportar Secullum</button>
+      <button class="btn btn-sm" onclick="abrirExportVR('${id}')" style="background:#e8005a;color:#fff;border-color:#e8005a">🟢 Exportar VR PAT</button>
       <button class="btn btn-sm btn-d" onclick="window.excluirAdmissao('${id}')">🗑 Excluir checklist</button>
     </div>
     <div class="card" style="margin-bottom:1rem">
@@ -2116,6 +2131,167 @@ window.gerarArquivoSecullum=function(){
   const el=document.createElement("a");el.href=url;el.download="secullum_"+norm(g("sx-nome")).replace(/\s+/g,"_")+".txt";el.click();
   URL.revokeObjectURL(url);toast("Arquivo gerado!","ok");closeModal("modal-secullum");
 };
+
+// VR PAT
+function normVR(v){return(v||'').toUpperCase().normalize('NFD').replace(/[̀-ͯ]/g,'').replace(/[^ -]/g,'');}
+function padR(v,n){const s=normVR(String(v||''));return s.slice(0,n).padEnd(n,' ');}
+function padL(v,n){const s=String(v||'').replace(/\D/g,'');return s.slice(0,n).padStart(n,'0');}
+
+function gerarLinhaVR(campos){
+  // campos: [{val, size, tipo}] tipo='X' padR, tipo='9' padL
+  let linha='';
+  campos.forEach(c=>{linha+=c.tipo==='9'?padL(c.val,c.size):padR(c.val,c.size);});
+  return linha.slice(0,341).padEnd(341,' ');
+}
+
+function montarArquivoVR(adms, params){
+  // params: {cnpjCliente, codLocalEntrega, dataAgend, valorBenef, codProduto}
+  const norm=normVR;
+  const cnpj=padL(params.cnpjCliente,14);
+  const codLE=padR(params.codLocalEntrega,30);
+  const prod=padR(params.codProduto||'AXM',3);
+  const dataAgend=params.dataAgend.replace(/\D/g,'').slice(0,8).padEnd(8,'0');
+  const valor=params.valorBenef?String(Math.round(parseFloat(params.valorBenef)*100)).padStart(11,'0'):'00000000000';
+  let linhas=[];
+  let numLinha=1;
+
+  const addLinha=(registro)=>{
+    const numStr=String(numLinha).padStart(9,'0');
+    linhas.push(registro.padEnd(341,' ')+numStr);
+    numLinha++;
+  };
+
+  // Header (tipo 00) — 350 chars
+  addLinha('00'+'011'+cnpj+padR('RP CONSTRUBASE',40)+''.padEnd(282,' '));
+
+  // Beneficiários (tipo 30) e Benefícios (tipo 60)
+  adms.forEach(({a,c})=>{
+    const cpf=padL((c.cpf||'').replace(/\D/g,''),11);
+    const matricula=padR(a.nfolha||'',10);
+    const nome=padR(normVR(a.nome||c.nome||''),40);
+    const dtNasc=padL((c.nasc||'').replace(/\D/g,'').split('').reverse().join('').slice(0,8)||'00000000',8);
+    // nasc vem como YYYY-MM-DD → converter para DDMMAAAA
+    let nascStr='00000000';
+    if(c.nasc&&c.nasc.length===10){const p=c.nasc.split('-');nascStr=p[2]+p[1]+p[0];}
+    const sexo=padR(c.sexo==='M'?'M':c.sexo==='F'?'F':'',1);
+    // Registro 30 — Beneficiário
+    addLinha('30'+cnpj+cpf+codLE+padR('',12)+matricula+nome+padR('',24)+nascStr+sexo+padR('',2)+''.padEnd(187,' '));
+    // Registro 60 — Benefício Voucher
+    addLinha('60'+cnpj+prod+cpf+padR('',40)+valor+''.padEnd(260,' '));
+  });
+
+  // Produto Voucher (tipo 50) — inserir após header
+  // Na estrutura correta: 50 vai antes dos 60. Vamos reordenar
+  const header=linhas.shift();
+  const benefLines=[];const voucherLines=[];
+  linhas.forEach(l=>{if(l.startsWith('30'))benefLines.push(l);else voucherLines.push(l);});
+  
+  // Produto 50
+  let linha50='50'+cnpj+prod+dataAgend+''.padEnd(314,' ');
+  
+  // Renumerar tudo
+  let final=[];let nl=1;
+  const add=(l)=>{final.push(l.slice(0,341)+String(nl).padStart(9,'0'));nl++;};
+  add(header);
+  linha50=linha50.slice(0,341);
+  final.push(linha50.padEnd(341,' ')+String(nl).padStart(9,'0'));nl++;
+  benefLines.forEach(l=>add(l));
+  voucherLines.forEach(l=>add(l));
+  // Trailer (tipo 99)
+  final.push(('99'+cnpj+''.padEnd(325,' ')).padEnd(341,' ')+String(nl).padStart(9,'0'));
+
+  return final.join('\r\n');
+}
+
+window.abrirExportVR=function(admId){
+  const a=admissoes.find(x=>x.id===admId);if(!a)return;
+  const c=candidatos.find(x=>x.id===a.candidatoId)||{};
+  const empCfg=cfg.empresas.find(e=>e.nome===a.empresa)||{};
+  const cnpj=(empCfg.cnpj||'').replace(/\D/g,'');
+  const prev=document.getElementById('modal-vr');if(prev)prev.remove();
+  const html=`<div id="modal-vr" class="modal-ov open"><div class="modal" style="max-width:500px">
+    <div class="modal-hdr"><span class="modal-title">Exportar VR PAT — ${normVR(a.nome||c.nome||'')}</span><button class="modal-x" onclick="closeModal('modal-vr')">×</button></div>
+    <p style="font-size:12px;color:var(--txt2);margin-bottom:12px">Arquivo posicional para cadastro de beneficiário e pedido de cartão (valor R$ 0,00).</p>
+    <div class="g2">
+      <div class="fg"><label>CNPJ da empresa (só números) *</label><input type="text" id="vr-cnpj" value="${cnpj}" placeholder="00000000000000"></div>
+      <div class="fg"><label>Código local de entrega *</label><input type="text" id="vr-le" placeholder="Ex: MOGIGUACU01"></div>
+    </div>
+    <div class="g2">
+      <div class="fg"><label>Data agendamento (DDMMAAAA) *</label><input type="text" id="vr-data" placeholder="01072026"></div>
+      <div class="fg"><label>Valor benefício (R$)</label><input type="text" id="vr-valor" value="0" placeholder="0"></div>
+    </div>
+    <div class="fg"><label>Código do produto</label><input type="text" id="vr-prod" value="AXM" placeholder="AXM"></div>
+    <div class="btn-row" style="margin-top:1rem">
+      <button class="btn btn-p" onclick="gerarVRUnico('${admId}')" style="background:#e8005a;border-color:#e8005a">⬇ Baixar arquivo .txt</button>
+      <button class="btn" onclick="closeModal('modal-vr')">Cancelar</button>
+    </div>
+  </div></div>`;
+  document.body.insertAdjacentHTML('beforeend',html);
+};
+
+window.gerarVRUnico=function(admId){
+  const a=admissoes.find(x=>x.id===admId);if(!a)return;
+  const c=candidatos.find(x=>x.id===a.candidatoId)||{};
+  const cnpj=document.getElementById('vr-cnpj')?.value.trim();
+  const le=document.getElementById('vr-le')?.value.trim();
+  const data=document.getElementById('vr-data')?.value.trim();
+  if(!cnpj||!le||!data){toast('Preencha CNPJ, local de entrega e data.','er');return;}
+  const txt=montarArquivoVR([{a,c}],{cnpjCliente:cnpj,codLocalEntrega:le,dataAgend:data,valorBenef:document.getElementById('vr-valor')?.value||'0',codProduto:document.getElementById('vr-prod')?.value||'AXM'});
+  const blob=new Blob([txt],{type:'text/plain;charset=utf-8'});
+  const url=URL.createObjectURL(blob);
+  const el=document.createElement('a');el.href=url;el.download='vrpat_'+normVR(a.nome||c.nome||'').replace(/\s+/g,'_')+'.txt';el.click();
+  URL.revokeObjectURL(url);toast('Arquivo VR PAT gerado!','ok');closeModal('modal-vr');
+};
+
+window.toggleTodosAdm=function(checked){
+  document.querySelectorAll('.adm-sel-cb').forEach(cb=>cb.checked=checked);
+  atualizarBtnVR();
+};
+
+window.atualizarBtnVR=function(){
+  const sel=document.querySelectorAll('.adm-sel-cb:checked').length;
+  const btn=document.getElementById('btn-vr-lote');
+  if(btn)btn.style.display=sel>0?'inline-flex':'none';
+  if(btn&&sel>0)btn.textContent=`🟢 Exportar VR PAT (${sel} selecionado${sel>1?'s':''})`;
+};
+
+window.exportarVRLote=function(){
+  const ids=[...document.querySelectorAll('.adm-sel-cb:checked')].map(cb=>cb.dataset.id);
+  if(!ids.length){toast('Selecione ao menos uma admissão.','er');return;}
+  const empCfg=cfg.empresas.find(e=>e.nome===admissoes.find(x=>x.id===ids[0])?.empresa)||{};
+  const cnpj=(empCfg.cnpj||'').replace(/\D/g,'');
+  const prev=document.getElementById('modal-vr-lote');if(prev)prev.remove();
+  const html=`<div id="modal-vr-lote" class="modal-ov open"><div class="modal" style="max-width:500px">
+    <div class="modal-hdr"><span class="modal-title">Exportar VR PAT — ${ids.length} funcionário${ids.length>1?'s':''}</span><button class="modal-x" onclick="closeModal('modal-vr-lote')">×</button></div>
+    <p style="font-size:12px;color:var(--txt2);margin-bottom:12px">Os campos abaixo serão aplicados a todos os selecionados.</p>
+    <div class="fg"><label>CNPJ da empresa (só números) *</label><input type="text" id="vrl-cnpj" value="${cnpj}" placeholder="00000000000000"></div>
+    <div class="fg"><label>Código local de entrega *</label><input type="text" id="vrl-le" placeholder="Ex: MOGIGUACU01"></div>
+    <div class="g2">
+      <div class="fg"><label>Data agendamento (DDMMAAAA) *</label><input type="text" id="vrl-data" placeholder="01072026"></div>
+      <div class="fg"><label>Valor benefício (R$)</label><input type="text" id="vrl-valor" value="0"></div>
+    </div>
+    <div class="fg"><label>Código do produto</label><input type="text" id="vrl-prod" value="AXM"></div>
+    <div class="btn-row" style="margin-top:1rem">
+      <button class="btn btn-p" onclick="gerarVRLote(${JSON.stringify(ids)})" style="background:#e8005a;border-color:#e8005a">⬇ Baixar arquivo .txt</button>
+      <button class="btn" onclick="closeModal('modal-vr-lote')">Cancelar</button>
+    </div>
+  </div></div>`;
+  document.body.insertAdjacentHTML('beforeend',html);
+};
+
+window.gerarVRLote=function(ids){
+  const cnpj=document.getElementById('vrl-cnpj')?.value.trim();
+  const le=document.getElementById('vrl-le')?.value.trim();
+  const data=document.getElementById('vrl-data')?.value.trim();
+  if(!cnpj||!le||!data){toast('Preencha CNPJ, local de entrega e data.','er');return;}
+  const adms=ids.map(id=>{const a=admissoes.find(x=>x.id===id);const c=candidatos.find(x=>x.id===a?.candidatoId)||{};return{a,c};}).filter(x=>x.a);
+  const txt=montarArquivoVR(adms,{cnpjCliente:cnpj,codLocalEntrega:le,dataAgend:data,valorBenef:document.getElementById('vrl-valor')?.value||'0',codProduto:document.getElementById('vrl-prod')?.value||'AXM'});
+  const blob=new Blob([txt],{type:'text/plain;charset=utf-8'});
+  const url=URL.createObjectURL(blob);
+  const el=document.createElement('a');el.href=url;el.download='vrpat_lote_'+new Date().toISOString().slice(0,10)+'.txt';el.click();
+  URL.revokeObjectURL(url);toast('Arquivo VR PAT gerado!','ok');closeModal('modal-vr-lote');
+};
+
 // INIT
 (function(){
   const token=sessionStorage.getItem('fb_token');const email=sessionStorage.getItem('fb_email');const uid=sessionStorage.getItem('fb_uid');
