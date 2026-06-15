@@ -2161,7 +2161,7 @@ function montarArquivoVR(adms, params){
   const add=(reg)=>{final.push(reg.slice(0,341).padEnd(341,' ')+String(nl).padStart(9,'0'));nl++;};
 
   // 00 — Header: tipo(2)+versão(4)+CNPJ(14)+NomeEmpresa(40)+filler(281)
-  add('00'+'0115'+cnpj+nomeEmp+''.padEnd(281,' '));
+  add('00'+'011'+cnpj+nomeEmp+''.padEnd(282,' '));
 
   // 30 — Beneficiário por funcionário (vêm antes do 50)
   // tipo(2)+CNPJ(14)+CPF(11)+CodLE(2)+filler(40)+matricula(10)+nome(40)+filler2(24)+nasc(8)+sexo(1)+filler3(189)
