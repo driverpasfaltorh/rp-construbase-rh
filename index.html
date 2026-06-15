@@ -2149,40 +2149,42 @@ function gerarLinhaVR(campos){
 }
 
 function montarArquivoVR(adms, params){
+  // Baseado no layout real do arquivo VR PAT analisado
   const cnpj=padL(params.cnpjCliente,14);
-  const codLE=padR(params.codLocalEntrega,30);
+  const codLE=padR(params.codLocalEntrega,2);  // 2 chars
   const prod=padR(params.codProduto||'AXM',3);
   const dataAgend=(params.dataAgend||'').replace(/\D/g,'').slice(0,8).padStart(8,'0');
   const valor=params.valorBenef?String(Math.round(parseFloat(params.valorBenef)*100)).padStart(11,'0'):'00000000000';
+  const nomeEmp=padR(normVR(params.nomeEmpresa||'RP CONSTRUBASE'),40);
 
   let final=[];let nl=1;
   const add=(reg)=>{final.push(reg.slice(0,341).padEnd(341,' ')+String(nl).padStart(9,'0'));nl++;};
 
-  // 00 — Header
-  add('00'+'011'+cnpj+padR('RP CONSTRUBASE',40)+''.padEnd(282,' '));
+  // 00 — Header: tipo(2)+versão(4)+CNPJ(14)+NomeEmpresa(40)+filler(281)
+  add('00'+'0115'+cnpj+nomeEmp+''.padEnd(281,' '));
 
-  // 11 — Associação de CNPJ ao Local de Entrega (obrigatório)
-  // TipoReg(2)+CNPJ(14)+CodLE(30)+CNPJ_Empresa(14)+FillER(281)
-  add('11'+cnpj+codLE+cnpj+''.padEnd(281,' '));
-
-  // 50 — Produto Voucher
-  add('50'+cnpj+prod+dataAgend+''.padEnd(314,' '));
-
-  // 30 + 60 — Beneficiário e Benefício por funcionário
+  // 30 — Beneficiário por funcionário (vêm antes do 50)
+  // tipo(2)+CNPJ(14)+CPF(11)+CodLE(2)+filler(40)+matricula(10)+nome(40)+filler2(24)+nasc(8)+sexo(1)+filler3(189)
   adms.forEach(({a,c})=>{
     const cpf=padL((c.cpf||'').replace(/\D/g,''),11);
     const matricula=padR(a.nfolha||'',10);
     const nome=padR(normVR(a.nome||c.nome||''),40);
-    let nascStr='00000000';
+    let nascStr='        ';
     if(c.nasc&&c.nasc.length===10){const p=c.nasc.split('-');nascStr=p[2]+p[1]+p[0];}
-    const sexo=padR(c.sexo==='M'?'M':c.sexo==='F'?'F':'',1);
-    // 30 — Beneficiário
-    add('30'+cnpj+cpf+codLE+padR('',12)+matricula+nome+padR('',24)+nascStr+sexo+padR('',2)+''.padEnd(187,' '));
-    // 60 — Benefício Voucher
-    add('60'+cnpj+prod+cpf+padR('',40)+valor+''.padEnd(260,' '));
+    const sexo=c.sexo==='M'?'M':c.sexo==='F'?'F':' ';
+    add('30'+cnpj+cpf+codLE+''.padEnd(40,' ')+matricula+nome+''.padEnd(24,' ')+nascStr+sexo+''.padEnd(189,' '));
   });
 
-  // 99 — Trailer
+  // 50 — Produto Voucher: tipo(2)+CNPJ(14)+produto(3)+data(8)+filler(314)
+  add('50'+cnpj+prod+dataAgend+''.padEnd(314,' '));
+
+  // 60 — Benefício por funcionário: tipo(2)+CNPJ(14)+produto(3)+CPF(11)+filler(40)+valor(11)+filler(260)
+  adms.forEach(({a,c})=>{
+    const cpf=padL((c.cpf||'').replace(/\D/g,''),11);
+    add('60'+cnpj+prod+cpf+''.padEnd(40,' ')+valor+''.padEnd(260,' '));
+  });
+
+  // 99 — Trailer: tipo(2)+CNPJ(14)+filler(325)
   add('99'+cnpj+''.padEnd(325,' '));
 
   return final.join('\r\n');
@@ -2222,7 +2224,7 @@ window.gerarVRUnico=function(admId){
   const le=document.getElementById('vr-le')?.value.trim();
   const data=document.getElementById('vr-data')?.value.trim();
   if(!cnpj||!le||!data){toast('Preencha CNPJ, local de entrega e data.','er');return;}
-  const nomeLE=document.getElementById('vr-le-nome')?.value||le;const txt=montarArquivoVR([{a,c}],{cnpjCliente:cnpj,codLocalEntrega:le,nomeLocalEntrega:nomeLE,dataAgend:data,valorBenef:document.getElementById('vr-valor')?.value||'0',codProduto:document.getElementById('vr-prod')?.value||'AXM'});
+  const empNome=(cfg.empresas.find(e=>e.cnpj&&e.cnpj.replace(/\D/g,'')==cnpj)||{}).nome||'';const txt=montarArquivoVR([{a,c}],{cnpjCliente:cnpj,codLocalEntrega:le,nomeEmpresa:empNome,dataAgend:data,valorBenef:document.getElementById('vr-valor')?.value||'0',codProduto:document.getElementById('vr-prod')?.value||'AXM'});
   const blob=new Blob([txt],{type:'text/plain;charset=utf-8'});
   const url=URL.createObjectURL(blob);
   const el=document.createElement('a');el.href=url;el.download='vrpat_'+normVR(a.nome||c.nome||'').replace(/\s+/g,'_')+'.txt';el.click();
@@ -2272,7 +2274,7 @@ window.gerarVRLote=function(){
   const data=document.getElementById('vrl-data')?.value.trim();
   if(!cnpj||!le||!data){toast('Preencha CNPJ, local de entrega e data.','er');return;}
   const adms=ids.map(id=>{const a=admissoes.find(x=>x.id===id);const c=candidatos.find(x=>x.id===a?.candidatoId)||{};return{a,c};}).filter(x=>x.a);
-  const nomeLE=document.getElementById('vrl-le-nome')?.value||le;const txt=montarArquivoVR(adms,{cnpjCliente:cnpj,codLocalEntrega:le,nomeLocalEntrega:nomeLE,dataAgend:data,valorBenef:document.getElementById('vrl-valor')?.value||'0',codProduto:document.getElementById('vrl-prod')?.value||'AXM'});
+  const empNome=(cfg.empresas.find(e=>e.cnpj&&e.cnpj.replace(/\D/g,'')==cnpj)||{}).nome||'';const txt=montarArquivoVR(adms,{cnpjCliente:cnpj,codLocalEntrega:le,nomeEmpresa:empNome,dataAgend:data,valorBenef:document.getElementById('vrl-valor')?.value||'0',codProduto:document.getElementById('vrl-prod')?.value||'AXM'});
   const blob=new Blob([txt],{type:'text/plain;charset=utf-8'});
   const url=URL.createObjectURL(blob);
   const el=document.createElement('a');el.href=url;el.download='vrpat_lote_'+new Date().toISOString().slice(0,10)+'.txt';el.click();
