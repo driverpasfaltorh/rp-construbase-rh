@@ -568,10 +568,9 @@ window.esqueceuSenha = async function(){
 window.logout=function(){sessionStorage.clear();CU=null;cuProfile=null;document.getElementById('auth').style.display='flex';document.getElementById('app').style.display='none';document.getElementById('btn-login').disabled=false;document.getElementById('btn-login').textContent='Entrar';};
 
 // Retorna token válido, renovando se necessário
-async function getToken(){
+async function getToken(forceRefresh){
   const exp=parseInt(sessionStorage.getItem('fb_token_exp')||'0');
-  if(Date.now()<exp) return sessionStorage.getItem('fb_token');
-  // Token expirado — renovar com refreshToken
+  if(!forceRefresh&&Date.now()<exp) return sessionStorage.getItem('fb_token');
   const refresh=sessionStorage.getItem('fb_refresh');
   if(!refresh) return sessionStorage.getItem('fb_token');
   try{
@@ -588,6 +587,19 @@ async function getToken(){
     }
   }catch(e){console.warn('Erro ao renovar token:',e);}
   return sessionStorage.getItem('fb_token');
+}
+
+// Fetch autenticado ao Firestore com retry automático em 401
+async function fsFetch(url,options={}){
+  let token=await getToken();
+  const headers={...(options.headers||{}),'Authorization':`Bearer ${token}`};
+  let resp=await fetch(url,{...options,headers});
+  if(resp.status===401){
+    token=await getToken(true); // força renovação
+    const headers2={...(options.headers||{}),'Authorization':`Bearer ${token}`};
+    resp=await fetch(url,{...options,headers:headers2});
+  }
+  return resp;
 }
 
 async function iniciarApp(){
@@ -850,9 +862,7 @@ window.salvarCand=async function(){
   };
   try{
     const proj='rp-construbase-rh';
-    const token=await getToken();
     const headers={'Content-Type':'application/json'};
-    if(token)headers['Authorization']=`Bearer ${token}`;
     const toFs=v=>{
       if(v===null||v===undefined)return{nullValue:null};
       if(typeof v==='boolean')return{booleanValue:v};
@@ -871,12 +881,12 @@ window.salvarCand=async function(){
       if(candAtual.docsStatus&&Object.keys(candAtual.docsStatus).length)preservar.docsStatus=candAtual.docsStatus;
       if(candAtual.cadastroCompleto)preservar.cadastroCompleto=candAtual.cadastroCompleto;
       const url=`https://firestore.googleapis.com/v1/projects/${proj}/databases/(default)/documents/candidatos/${editCandId}`;
-      const resp=await fetch(url,{method:'PATCH',headers,body:JSON.stringify({fields:toFsFields({...data,...preservar})})});
+      const resp=await fsFetch(url,{method:'PATCH',headers,body:JSON.stringify({fields:toFsFields({...data,...preservar})})});
       if(!resp.ok)throw new Error(await resp.text());
       toast('Candidato atualizado!','ok');
     }else{
-      const url=`https://firestore.googleapis.com/v1/projects/${proj}/databases/(default)/documents/candidatos?key=AIzaSyC_Uy9YZbCWMOEyBvlMovLw-tgjHk8L3Ec`;
-      const resp=await fetch(url,{method:'POST',headers,body:JSON.stringify({fields:toFsFields(data)})});
+      const url=`https://firestore.googleapis.com/v1/projects/${proj}/databases/(default)/documents/candidatos`;
+      const resp=await fsFetch(url,{method:'POST',headers,body:JSON.stringify({fields:toFsFields(data)})});
       if(!resp.ok)throw new Error(await resp.text());
       toast('Candidato salvo!','ok');
     }
@@ -961,11 +971,8 @@ window.abrirCand=async function(id){
   // Reler do Firestore para pegar docsStatus atualizado
   try{
     const proj='rp-construbase-rh';
-    const token=await getToken();
     const url=`https://firestore.googleapis.com/v1/projects/${proj}/databases/(default)/documents/candidatos/${id}`;
-    const headers={'Content-Type':'application/json'};
-    if(token)headers['Authorization']=`Bearer ${token}`;
-    const resp=await fetch(url,{headers});
+    const resp=await fsFetch(url,{});
     if(resp.ok){
       const d=await resp.json();
       const parseVal=v=>{
@@ -1165,12 +1172,9 @@ window.abrirAdm=async function(id){
   // Reler candidato via REST API com idToken (evita permission-denied do SDK)
   let c=candidatos.find(x=>x.id===a.candidatoId)||null;
   try{
-    const token=await getToken();
     const proj='rp-construbase-rh';
-    const url=`https://firestore.googleapis.com/v1/projects/${proj}/databases/(default)/documents/candidatos/${a.candidatoId}${token?'':'?key=AIzaSyC_Uy9YZbCWMOEyBvlMovLw-tgjHk8L3Ec'}`;
-    const headers={'Content-Type':'application/json'};
-    if(token) headers['Authorization']=`Bearer ${token}`;
-    const resp=await fetch(url,{headers});
+    const url=`https://firestore.googleapis.com/v1/projects/${proj}/databases/(default)/documents/candidatos/${a.candidatoId}`;
+    const resp=await fsFetch(url,{});
     if(resp.ok){
       const d=await resp.json();
       const parseVal2=v=>{if(!v)return null;if(v.stringValue!==undefined)return v.stringValue;if(v.booleanValue!==undefined)return v.booleanValue;if(v.integerValue!==undefined)return parseInt(v.integerValue);if(v.doubleValue!==undefined)return v.doubleValue;if(v.mapValue!==undefined)return parseFields2(v.mapValue.fields||{});if(v.arrayValue!==undefined)return(v.arrayValue.values||[]).map(parseVal2);return null;};
@@ -1291,21 +1295,37 @@ window.cfgTab=function(tab,btn){
 };
 
 function renderCfgTab(tab){
-  const items=cfg[tab]||[];
-  const labels={cargos:'cargo',empresas:'empresa',origens:'origem',tiposcontrato:'tipo de contrato',obras:'obra',competencias:'categoria',documentos:'documento'};
+  let items=[...(cfg[tab]||[])];
+  const labels={cargos:'cargo',empresas:'empresa',origens:'origem',tiposcontrato:'tipo de contrato',obras:'obra',horarios:'horário',departamentos:'departamento',competencias:'categoria',documentos:'documento'};
+  // Ordenação alfabética por nome (ou categoria, para competências)
+  items.sort((a,b)=>(a.nome||a.categoria||'').localeCompare(b.nome||b.categoria||'','pt-BR',{sensitivity:'base'}));
+  // Filtro de busca (mantém o texto digitado ao re-renderizar)
+  const termoAnterior=document.getElementById('cfg-search')?.value||'';
+  if(termoAnterior.trim()){
+    const t=termoAnterior.trim().toLowerCase();
+    items=items.filter(item=>(item.nome||item.categoria||'').toLowerCase().includes(t));
+  }
   const el=document.getElementById('cfg-content');
-  el.innerHTML=`<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1rem">
-    <span style="font-size:13px;font-weight:500">${items.length} item${items.length!==1?'s':''}</span>
+  el.innerHTML=`<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1rem;gap:10px;flex-wrap:wrap">
+    <input type="text" id="cfg-search" placeholder="🔍 Buscar ${labels[tab]||'item'}..." value="${termoAnterior.replace(/"/g,'&quot;')}" oninput="renderCfgTab('${tab}')" style="flex:1;min-width:180px;max-width:320px;padding:8px 12px;border:1px solid var(--bd);border-radius:8px;font-size:13px">
+    <span style="font-size:13px;font-weight:500;color:var(--txt2)">${items.length} item${items.length!==1?'s':''}</span>
     <button class="btn btn-p btn-sm" onclick="novoCfgItem('${tab}')">+ Adicionar ${labels[tab]||'item'}</button>
   </div>`+
   (items.length?items.map(item=>`<div class="cfg-item">
     <div><div class="cfg-lbl">${item.nome||item.categoria||'—'}</div>
-    <div class="cfg-sub">${tab==='cargos'?(item.perfil||'')+(item.cbo?' · CBO '+item.cbo:''):tab==='empresas'?(item.cidade||''):tab==='competencias'?(item.perfil||'')+(item.tags?' · '+item.tags.length+' tags':''):tab==='documentos'?(item.obrigatorio?'Obrigatório':'Opcional')+(item.hint?' · '+item.hint:''):tab==='origens'?(item.valor||''):(item.local||'')}</div></div>
+    <div class="cfg-sub">${tab==='cargos'?(item.perfil||'')+(item.cbo?' · CBO '+item.cbo:''):tab==='empresas'?(item.cnpj?'CNPJ '+item.cnpj:'')+(item.cidade?' · '+item.cidade:''):tab==='competencias'?(item.perfil||'')+(item.tags?' · '+item.tags.length+' tags':''):tab==='documentos'?(item.obrigatorio?'Obrigatório':'Opcional')+(item.hint?' · '+item.hint:''):tab==='origens'?(item.valor||''):tab==='horarios'?(item.descricao||''):(item.local||'')}</div></div>
     <div style="display:flex;gap:6px">
       <button class="btn btn-sm" onclick="editCfgItem('${tab}','${item.id}')">Editar</button>
       <button class="btn btn-sm btn-d" onclick="delCfgItem('${tab}','${item.id}')">Excluir</button>
     </div>
-  </div>`).join(''):'<div class="empty">Nenhum item cadastrado.</div>');
+  </div>`).join(''):'<div class="empty">Nenhum item encontrado.</div>');
+  // Mantém o foco no campo de busca após digitar (já que innerHTML recria o elemento)
+  const searchEl=document.getElementById('cfg-search');
+  if(searchEl){
+    searchEl.focus();
+    const len=searchEl.value.length;
+    searchEl.setSelectionRange(len,len);
+  }
 }
 
 window.novoCfgItem=function(col){cfgEditCol=col;cfgEditItem=null;document.getElementById('mcfg-title').textContent='Adicionar item';document.getElementById('mcfg-body').innerHTML=buildCfgForm(col,null);openModal('modal-cfg');};
@@ -1314,10 +1334,8 @@ window.delCfgItem=async function(col,id){
   if(!confirm('Excluir este item?'))return;
   try{
     const proj='rp-construbase-rh';
-    const token=await getToken();
-    const headers={};if(token)headers['Authorization']=`Bearer ${token}`;
     const url=`https://firestore.googleapis.com/v1/projects/${proj}/databases/(default)/documents/${col}/${id}`;
-    const resp=await fetch(url,{method:'DELETE',headers});
+    const resp=await fsFetch(url,{method:'DELETE'});
     if(!resp.ok)throw new Error(await resp.text());
     cfg[col]=cfg[col].filter(x=>x.id!==id);
     popularSelects();renderCfgTab(col);toast('Excluído!','ok');
@@ -1351,14 +1369,12 @@ window.salvarCfgItem=async function(){
   data.atualizadoEm=new Date().toISOString();
   try{
     const proj='rp-construbase-rh';
-    const token=await getToken();
     const headers={'Content-Type':'application/json'};
-    if(token)headers['Authorization']=`Bearer ${token}`;
     const toFs=v=>{if(v===null||v===undefined)return{nullValue:null};if(typeof v==='boolean')return{booleanValue:v};if(typeof v==='number')return Number.isInteger(v)?{integerValue:v}:{doubleValue:v};if(Array.isArray(v))return{arrayValue:{values:v.map(i=>({stringValue:String(i)}))}};return{stringValue:String(v)};};
     const toFsFields=obj=>Object.fromEntries(Object.entries(obj).map(([k,v])=>[k,toFs(v)]));
     if(cfgEditItem){
       const url=`https://firestore.googleapis.com/v1/projects/${proj}/databases/(default)/documents/${col}/${cfgEditItem.id}`;
-      const resp=await fetch(url,{method:'PATCH',headers,body:JSON.stringify({fields:toFsFields({...cfgEditItem,...data})})});
+      const resp=await fsFetch(url,{method:'PATCH',headers,body:JSON.stringify({fields:toFsFields({...cfgEditItem,...data})})});
       if(!resp.ok)throw new Error(await resp.text());
       cfg[col]=cfg[col].map(x=>x.id===cfgEditItem.id?{...x,...data}:x);
     }else{
@@ -1368,12 +1384,12 @@ window.salvarCfgItem=async function(){
         docId=data.nome.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/[^a-z0-9]+/g,'_').replace(/^_|_$/g,'').slice(0,30);
         data.id=docId;
         const url=`https://firestore.googleapis.com/v1/projects/${proj}/databases/(default)/documents/${col}/${docId}`;
-        const resp=await fetch(url,{method:'PATCH',headers,body:JSON.stringify({fields:toFsFields(data)})});
+        const resp=await fsFetch(url,{method:'PATCH',headers,body:JSON.stringify({fields:toFsFields(data)})});
         if(!resp.ok)throw new Error(await resp.text());
         cfg[col].push({id:docId,...data});
       }else{
         const url=`https://firestore.googleapis.com/v1/projects/${proj}/databases/(default)/documents/${col}`;
-        const resp=await fetch(url,{method:'POST',headers,body:JSON.stringify({fields:toFsFields(data)})});
+        const resp=await fsFetch(url,{method:'POST',headers,body:JSON.stringify({fields:toFsFields(data)})});
         if(!resp.ok)throw new Error(await resp.text());
         const result=await resp.json();
         docId=result.name.split('/').pop();
@@ -2045,7 +2061,6 @@ window.salvarEvento = async function(){
     const novosEventos = [...eventosAtuais, evento];
     // Usar REST API para evitar permission-denied do SDK
     const proj='rp-construbase-rh';
-    const token=await getToken();
     const url=`https://firestore.googleapis.com/v1/projects/${proj}/databases/(default)/documents/candidatos/${selCandId}?updateMask.fieldPaths=selecao&updateMask.fieldPaths=selecaoStatus&updateMask.fieldPaths=status&updateMask.fieldPaths=atualizadoEm`;
     const toFsValue=v=>{
       if(typeof v==='boolean')return{booleanValue:v};
@@ -2060,8 +2075,7 @@ window.salvarEvento = async function(){
       atualizadoEm:{stringValue:new Date().toISOString()}
     }});
     const headers={'Content-Type':'application/json'};
-    if(token)headers['Authorization']=`Bearer ${token}`;
-    const resp=await fetch(url,{method:'PATCH',headers,body});
+    const resp=await fsFetch(url,{method:'PATCH',headers,body});
     if(!resp.ok)throw new Error(await resp.text());
     // Atualizar cache local
     if(cand){cand.selecao=novosEventos;cand.selecaoStatus=novoSelStatus;cand.status=novoStatus;}
@@ -2081,7 +2095,6 @@ window.excluirEvento = async function(candId, idx){
   const novoSelStatus = ultEvento?(ultEvento.tipo==='triagem'?'triagem':ultEvento.tipo==='entrevista'?'entrevista':ultEvento.tipo==='avaliacao'?'avaliacao':ultEvento.tipo==='proposta'?'proposta':'triagem'):'triagem';
   try{
     const proj='rp-construbase-rh';
-    const token=await getToken();
     const toFsValue=v=>{
       if(typeof v==='boolean')return{booleanValue:v};
       if(Array.isArray(v))return{arrayValue:{values:v.map(i=>({mapValue:{fields:Object.fromEntries(Object.entries(i).map(([k2,v2])=>[k2,toFsValue(v2)]))}}))}}; 
@@ -2090,8 +2103,7 @@ window.excluirEvento = async function(candId, idx){
     const url=`https://firestore.googleapis.com/v1/projects/${proj}/databases/(default)/documents/candidatos/${candId}?updateMask.fieldPaths=selecao&updateMask.fieldPaths=selecaoStatus&updateMask.fieldPaths=atualizadoEm`;
     const body=JSON.stringify({fields:{selecao:toFsValue(eventos),selecaoStatus:{stringValue:novoSelStatus},atualizadoEm:{stringValue:new Date().toISOString()}}});
     const headers={'Content-Type':'application/json'};
-    if(token)headers['Authorization']=`Bearer ${token}`;
-    const resp=await fetch(url,{method:'PATCH',headers,body});
+    const resp=await fsFetch(url,{method:'PATCH',headers,body});
     if(!resp.ok)throw new Error(await resp.text());
     if(cand){cand.selecao=eventos;cand.selecaoStatus=novoSelStatus;}
     toast('Evento excluído!','ok');
